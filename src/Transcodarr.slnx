@@ -1,2 +1,4 @@
 <Solution>
+  <Project Path="Transcodarr.Core/Transcodarr.Core.csproj" />
+  <Project Path="Transcodarr.Node/Transcodarr.Node.csproj" />
 </Solution>
