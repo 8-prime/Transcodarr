@@ -1,6 +1,6 @@
 ﻿namespace Transcodarr.Core.Database.Entities;
 
-public class Library
+public class LibraryEntity
 {
     public required Guid Id { get; init; }
     public required string FileSystemPath  { get; init; }

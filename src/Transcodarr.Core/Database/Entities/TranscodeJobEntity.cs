@@ -2,7 +2,7 @@
 
 namespace Transcodarr.Core.Database.Entities;
 
-public class TranscodeJob
+public class TranscodeJobEntity
 {
     public Guid Id { get; set; }
     public Guid FileInfoId { get; set; }
