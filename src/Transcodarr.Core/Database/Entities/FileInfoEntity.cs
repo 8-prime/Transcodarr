@@ -2,11 +2,13 @@
 
 namespace Transcodarr.Core.Database.Entities;
 
-public class FileInfo
+public class FileInfoEntity
 {
     public required Guid Id { get; init; }
     public required string Path { get; init; }
     public required ProcessingState ProcessingState { get; set; }
+    public DateTimeOffset LastModified { get; init; }
+    public long Size { get; set; }
     
     // populated after successful probe job
     public string? VideoCodec { get; set; }
