@@ -1,4 +1,4 @@
-﻿namespace Transcodarr.Core.Common.Models;
+﻿namespace Transcodarr.Shared.DTOs;
 
 public class FileProbeResult
 {

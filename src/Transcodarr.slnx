@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="Transcodarr.Core/Transcodarr.Core.csproj" />
   <Project Path="Transcodarr.Node/Transcodarr.Node.csproj" />
-  <Project Path="Transcodearr.Shared/Transcodearr.Shared.csproj" />
+  <Project Path="Transcodarr.Shared/Transcodarr.Shared.csproj" />
 </Solution>

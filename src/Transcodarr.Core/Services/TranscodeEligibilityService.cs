@@ -1,5 +1,4 @@
-﻿using Transcodarr.Core.Common.Models;
-using Transcodarr.Core.Database.Entities;
+﻿using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services;
 

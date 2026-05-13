@@ -12,7 +12,10 @@
 
   <ItemGroup>
     <Folder Include="Common\DTOs\" />
-    <Folder Include="Endpoints\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transcodarr.Shared\Transcodarr.Shared.csproj" />
   </ItemGroup>
 
 </Project>
