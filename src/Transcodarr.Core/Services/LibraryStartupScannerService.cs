@@ -14,6 +14,12 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
     {
         await using var scope = serviceScopeFactory.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
+        var settings = await dbContext.AppConfigurations.FirstOrDefaultAsync(cancellationToken: stoppingToken);
+        if (settings is null)
+        {
+            throw new ApplicationException("App configuration not found");
+        }
+
         var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
         var transcodeEligibilityService = scope.ServiceProvider.GetRequiredService<TranscodeEligibilityService>();
         Dictionary<string, LibraryScanInfo> knownFiles =
@@ -29,7 +35,7 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
         foreach (var library in libraries)
         {
             await ScanLibraryAsync(knownFiles, library.FileSystemPath, dbContext, fileProbeService,
-                transcodeEligibilityService, stoppingToken);
+                transcodeEligibilityService, settings, stoppingToken);
         }
 
         var deletedPaths = knownFiles.Keys.ToList();
@@ -40,6 +46,7 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
         TranscodarrDbContext dbContext,
         FileProbeService fileProbeService,
         TranscodeEligibilityService transcodeEligibilityService,
+        AppConfigurationEntity configurationEntity,
         CancellationToken stoppingToken)
     {
         foreach (var file in Directory.EnumerateFiles(libraryPath, "*",
@@ -49,7 +56,8 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
             var fi = new FileInfo(file);
             if (!knownFiles.Remove(file, out var libraryScanInfo))
             {
-                await AddNewFile(dbContext, fileProbeService, transcodeEligibilityService, file, fi, stoppingToken);
+                await AddNewFile(dbContext, fileProbeService, transcodeEligibilityService, file, fi,
+                    configurationEntity, stoppingToken);
                 continue;
             }
 
@@ -62,7 +70,9 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
             dbContext.TranscodeJobs.Add(new TranscodeJobEntity
             {
                 FileInfoId = libraryScanInfo.FileInfoId,
-                State = JobState.Pending
+                State = JobState.Pending,
+                OutputPath = Path.Join(configurationEntity.TranscodeTempDirectory, Path.GetFileName(fi.FullName),
+                    FileTypeConstants.TempFileSuffix),
             });
 
             var stub = new FileInfoEntity
@@ -77,13 +87,14 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
 
     private static async Task AddNewFile(TranscodarrDbContext dbContext, FileProbeService fileProbeService,
         TranscodeEligibilityService transcodeEligibilityService, string file, FileInfo fi,
+        AppConfigurationEntity configurationEntity,
         CancellationToken stoppingToken)
     {
         var probeResult = await fileProbeService.ProbeFileAsync(file, stoppingToken);
 
         if (probeResult is null)
         {
-            // Add to dlq
+            //TODO: Add to dlq
             return;
         }
 
@@ -113,7 +124,9 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
         dbContext.TranscodeJobs.Add(new TranscodeJobEntity
         {
             FileInfoId = newFileInfo.Id,
-            State = JobState.Pending
+            State = JobState.Pending,
+            OutputPath = Path.Join(configurationEntity.TranscodeTempDirectory, Path.GetFileName(fi.FullName),
+                FileTypeConstants.TempFileSuffix)
         });
 
         newFileInfo.ProcessingState = ProcessingState.Queued;
