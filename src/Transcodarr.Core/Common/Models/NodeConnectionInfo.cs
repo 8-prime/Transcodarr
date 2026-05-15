@@ -10,5 +10,6 @@ public class NodeConnectionInfo
     public required string ConnectionId { get; set; }
     public required WebSocket WebSocket { get; set; }
     public NodeInfo? NodeInfo { get; set; }
+    public int FreeSlots { get; set; }
     public ConcurrentDictionary<Guid, TaskCompletionSource<SocketMessage?>> PendingRequests { get; set; } = [];
 }

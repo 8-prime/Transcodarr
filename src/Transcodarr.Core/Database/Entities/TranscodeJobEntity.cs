@@ -21,4 +21,5 @@ public class TranscodeJobEntity
     public long? OutputSizeBytes { get; set; }
     public double? VmafScore { get; set; }
     [MaxLength(256)] public string? EncoderSettingsSnapshot { get; set; }
+    public FileInfoEntity FileInfoEntity { get; set; } = null!;
 }

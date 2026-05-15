@@ -34,4 +34,9 @@ public class ConnectionManager
     {
         return _connections.TryGetValue(nodeId, out connection);
     }
+
+    public int GetTotalFreeSlots()
+    {
+        return _connections.Values.Sum(x => x.FreeSlots);
+    }
 }
