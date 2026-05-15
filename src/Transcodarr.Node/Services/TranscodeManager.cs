@@ -1,6 +1,4 @@
-﻿using Transcodarr.Node.Services;
-
-namespace Transcodarr.Core.Services;
+﻿namespace Transcodarr.Node.Services;
 
 public class TranscodeManager : BackgroundService
 {
