@@ -10,4 +10,8 @@
     <PackageReference Include="FFMpegCore" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Transcodarr.Shared\Transcodarr.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
