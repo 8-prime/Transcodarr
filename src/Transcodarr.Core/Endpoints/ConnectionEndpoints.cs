@@ -1,6 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Services;
 using Transcodarr.Shared.DTOs;
@@ -11,12 +12,22 @@ public static class ConnectionEndpoints
 {
     public static IEndpointRouteBuilder MapConnection(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.Map("/connection/{id}", MapAddConnection);
+        var group = endpoints.MapGroup("connections");
+        group.MapGet("", GetConnections);
+        group.Map("{id}", MapAddConnection);
         return endpoints;
     }
 
+
+    private static Ok<ICollection<NodeConnectionInfo>> GetConnections(
+        [FromServices] ConnectionManager connectionManager)
+    {
+        return TypedResults.Ok(connectionManager.GetConnections());
+    }
+
     private static async Task<Results<BadRequest, Ok>> MapAddConnection(string id, HttpContext context,
-        ConnectionManager connectionManager, MessageHandler messageHandler, CancellationToken cancellationToken)
+        [FromServices] ConnectionManager connectionManager, [FromServices] MessageHandler messageHandler,
+        CancellationToken cancellationToken)
     {
         try
         {

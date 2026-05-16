@@ -20,7 +20,7 @@ public class ConnectionManager
     public async Task<WebSocket> ConnectToServerAsync(CancellationToken stoppingToken)
     {
         var ws = new ClientWebSocket();
-        var endpoint = new Uri($"{_configuration.CoreUrl}/connection/{_configuration.NodeId}");
+        var endpoint = new Uri($"{_configuration.CoreUrl}/connections/{_configuration.NodeId}");
 
         await ws.ConnectAsync(endpoint, stoppingToken);
         _webSocket = ws;
@@ -35,6 +35,6 @@ public class ConnectionManager
         }
 
         Memory<byte> payLoad = JsonSerializer.SerializeToUtf8Bytes<SocketMessage>(message);
-        await _webSocket.SendAsync(payLoad, WebSocketMessageType.Text, WebSocketMessageFlags.None, stoppingToken);
+        await _webSocket.SendAsync(payLoad, WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, stoppingToken);
     }
 }

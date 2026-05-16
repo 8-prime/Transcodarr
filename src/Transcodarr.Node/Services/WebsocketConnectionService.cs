@@ -1,6 +1,9 @@
 ﻿using System.Net.WebSockets;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+using Transcodarr.Node.Common.Models;
 using Transcodarr.Shared.DTOs;
+using Transcodearr.Shared;
 
 namespace Transcodarr.Node.Services;
 
@@ -8,17 +11,35 @@ public class WebsocketConnectionService : BackgroundService
 {
     private readonly ConnectionManager _connectionManager;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly NodeConfiguration _configuration;
 
-    public WebsocketConnectionService(ConnectionManager connectionManager, IServiceScopeFactory serviceScopeFactory)
+    public WebsocketConnectionService(ConnectionManager connectionManager, IServiceScopeFactory serviceScopeFactory,
+        IOptions<NodeConfiguration> configuration)
     {
         _connectionManager = connectionManager;
         _serviceScopeFactory = serviceScopeFactory;
+        _configuration = configuration.Value;
     }
 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var ws = await _connectionManager.ConnectToServerAsync(stoppingToken);
+        await _connectionManager.SendAsync(new NodeInfoMessage(new NodeInfo
+        {
+            Name = _configuration.NodeId,
+            EncoderCapabilities =
+            [
+                new EncoderCapability
+                {
+                    Slots = 1,
+                    EncoderName = "hevc_nvenc"
+                }
+            ]
+        })
+        {
+            CorrelationId = Guid.NewGuid()
+        }, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested && !ws.CloseStatus.HasValue)
         {
