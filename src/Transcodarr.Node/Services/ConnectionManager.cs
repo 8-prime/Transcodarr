@@ -10,19 +10,30 @@ public class ConnectionManager
 {
     private readonly NodeConfiguration _configuration;
     private WebSocket? _webSocket;
+    private readonly ILogger<ConnectionManager> _logger;
 
 
-    public ConnectionManager(IOptions<NodeConfiguration> configuration)
+    public ConnectionManager(IOptions<NodeConfiguration> configuration, ILogger<ConnectionManager> logger)
     {
+        _logger = logger;
         _configuration = configuration.Value;
     }
 
-    public async Task<WebSocket> ConnectToServerAsync(CancellationToken stoppingToken)
+    public async Task<WebSocket?> ConnectToServerAsync(CancellationToken stoppingToken)
     {
         var ws = new ClientWebSocket();
         var endpoint = new Uri($"{_configuration.CoreUrl}/connections/{_configuration.NodeId}");
 
-        await ws.ConnectAsync(endpoint, stoppingToken);
+        try
+        {
+            await ws.ConnectAsync(endpoint, stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to connect to server");
+            return null;
+        }
+
         _webSocket = ws;
         return _webSocket;
     }
@@ -35,6 +46,7 @@ public class ConnectionManager
         }
 
         Memory<byte> payLoad = JsonSerializer.SerializeToUtf8Bytes<SocketMessage>(message);
-        await _webSocket.SendAsync(payLoad, WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, stoppingToken);
+        await _webSocket.SendAsync(payLoad, WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage,
+            stoppingToken);
     }
 }

@@ -54,20 +54,27 @@ public class JobQueueManagerService : BackgroundService
                 .Where(j => j.State == JobState.Pending).Take(candiatesCount)
                 .ToListAsync(cancellationToken: stoppingToken);
 
-            foreach (TranscodeJobEntity pendingJob in pendingJobs)
+            foreach (var pendingJob in pendingJobs)
             {
-                await _webSocketConnectionService.SendFireAndForgetAsync(
-                    new TranscodeRequest(pendingJob.FileInfoEntity.Path, pendingJob.OutputPath, pendingJob.FileInfoId,
-                        new TranscodeQualitySettings
-                        {
-                            ConstantRateFactor = config.ConstantRateFactor,
-                            DesiredAudioCodec = config.TranscodeTempAudioCodec,
-                            DesiredVideoCodec = config.TranscodeTempVideoCodec,
-                            DesiredEncoderPreset = config.TranscodeEncoderPreset,
-                        })
+                var conn = _connections.GetConnections().FirstOrDefault();
+                if (conn is null)
+                {
+                    break;
+                }
+
+                var request = new TranscodeRequest(pendingJob.FileInfoEntity.Path, pendingJob.OutputPath,
+                    pendingJob.FileInfoId,
+                    new TranscodeQualitySettings
                     {
-                        CorrelationId = Guid.NewGuid(),
-                    }, stoppingToken);
+                        ConstantRateFactor = config.ConstantRateFactor,
+                        DesiredAudioCodec = config.TranscodeTempAudioCodec,
+                        DesiredVideoCodec = config.TranscodeTempVideoCodec,
+                        DesiredEncoderPreset = config.TranscodeEncoderPreset,
+                    })
+                {
+                    CorrelationId = Guid.NewGuid(),
+                };
+                await _webSocketConnectionService.SendFireAndForgetAsync(request, conn, stoppingToken);
             }
 
             //get predicted available processing slots

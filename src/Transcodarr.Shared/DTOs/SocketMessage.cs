@@ -8,10 +8,13 @@ namespace Transcodarr.Shared.DTOs;
 [JsonDerivedType(typeof(ProbeResponse), nameof(ProbeResponse))]
 [JsonDerivedType(typeof(ProbeRequest), nameof(ProbeRequest))]
 [JsonDerivedType(typeof(NodeInfoMessage), nameof(NodeInfoMessage))]
+[JsonDerivedType(typeof(Heartbeat), nameof(Heartbeat))]
 public abstract record SocketMessage
 {
     public required Guid CorrelationId { get; init; }
 }
+
+public record Heartbeat : SocketMessage;
 
 public record ProbeRequest(string ProbeFilePath) : SocketMessage;
 

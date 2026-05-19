@@ -12,19 +12,50 @@ public class WebsocketConnectionService : BackgroundService
     private readonly ConnectionManager _connectionManager;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly NodeConfiguration _configuration;
+    private readonly ILogger<WebsocketConnectionService> _logger;
 
     public WebsocketConnectionService(ConnectionManager connectionManager, IServiceScopeFactory serviceScopeFactory,
-        IOptions<NodeConfiguration> configuration)
+        IOptions<NodeConfiguration> configuration, ILogger<WebsocketConnectionService> logger)
     {
         _connectionManager = connectionManager;
         _serviceScopeFactory = serviceScopeFactory;
+        _logger = logger;
         _configuration = configuration.Value;
     }
 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var ws = await _connectionManager.ConnectToServerAsync(stoppingToken);
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await OpenConnectionAndProcessMessagesAsync(stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Connection to core failed");
+            }
+        }
+    }
+
+    private async Task OpenConnectionAndProcessMessagesAsync(CancellationToken stoppingToken)
+    {
+        var cts = new CancellationTokenSource();
+        var linked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, stoppingToken);
+        WebSocket? ws = null;
+        while (ws is null)
+        {
+            if (linked.Token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            ws = await _connectionManager.ConnectToServerAsync(linked.Token);
+            await Task.Delay(TimeSpan.FromSeconds(30), linked.Token);
+        }
+
+
         await _connectionManager.SendAsync(new NodeInfoMessage(new NodeInfo
         {
             Name = _configuration.NodeId,
@@ -39,8 +70,34 @@ public class WebsocketConnectionService : BackgroundService
         })
         {
             CorrelationId = Guid.NewGuid()
-        }, stoppingToken);
+        }, linked.Token);
 
+        try
+        {
+            await Task.WhenAny(ProcessMessagesAsync(ws, linked.Token), SendHeartBeatsAsync(linked.Token));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Connection to core failed");
+        }
+
+        await cts.CancelAsync();
+    }
+
+    private async Task SendHeartBeatsAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await _connectionManager.SendAsync(new Heartbeat
+            {
+                CorrelationId = Guid.NewGuid()
+            }, stoppingToken);
+        }
+    }
+
+    private async Task ProcessMessagesAsync(WebSocket ws, CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested && !ws.CloseStatus.HasValue)
         {
             var buffer = new ArraySegment<byte>(new byte[4096]);

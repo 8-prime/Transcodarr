@@ -7,13 +7,15 @@ using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services;
 
-public class MessageHandler
+public partial class MessageHandler
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ILogger<MessageHandler> _logger;
 
-    public MessageHandler(IServiceScopeFactory serviceScopeFactory)
+    public MessageHandler(IServiceScopeFactory serviceScopeFactory, ILogger<MessageHandler> logger)
     {
         _serviceScopeFactory = serviceScopeFactory;
+        _logger = logger;
     }
 
     public async Task ProcessMessageAsync(SocketMessage message, NodeConnectionInfo nodeConnectionInfo,
@@ -27,9 +29,23 @@ public class MessageHandler
             case TranscodeResponse transcodeResponse:
                 await HandleTranscodeResponse(transcodeResponse, cancellationToken);
                 break;
+            case Heartbeat _:
+                await HandleHeartbeat(nodeConnectionInfo, cancellationToken);
+                break;
             default:
                 break;
         }
+    }
+
+    private async Task HandleHeartbeat(NodeConnectionInfo nodeConnectionInfo, CancellationToken cancellationToken)
+    {
+        LogReceivedHeartbeatFromNodeId(nodeConnectionInfo.ConnectionId);
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var wsConnectionService = scope.ServiceProvider.GetRequiredService<WebSocketConnectionService>();
+        await wsConnectionService.SendFireAndForgetAsync(new Heartbeat
+        {
+            CorrelationId = Guid.NewGuid(),
+        }, nodeConnectionInfo, cancellationToken);
     }
 
     private async Task HandleTranscodeResponse(TranscodeResponse transcodeResponse, CancellationToken cancellationToken)
@@ -83,4 +99,7 @@ public class MessageHandler
 
         await context.SaveChangesAsync(cancellationToken);
     }
+
+    [LoggerMessage(LogLevel.Debug, "Received heartbeat from {nodeId}")]
+    partial void LogReceivedHeartbeatFromNodeId(string nodeId);
 }
