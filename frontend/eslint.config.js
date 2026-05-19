@@ -19,4 +19,14 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // shadcn-generated primitives are vendor code — relax the rules that
+    // legitimately apply to our own components.
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/hooks/use-mobile.ts'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
 ])
