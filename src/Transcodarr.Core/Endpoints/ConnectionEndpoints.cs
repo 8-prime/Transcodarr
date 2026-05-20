@@ -25,10 +25,12 @@ public static class ConnectionEndpoints
         return TypedResults.Ok(connectionManager.GetConnections());
     }
 
-    private static async Task<Results<BadRequest, Ok>> MapAddConnection(string id, HttpContext context,
+    private static async Task<IResult> MapAddConnection(string id, HttpContext context,
         [FromServices] ConnectionManager connectionManager, [FromServices] MessageHandler messageHandler,
+        [FromServices] ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
+        var logger = loggerFactory.CreateLogger(nameof(ConnectionEndpoints));
         try
         {
             if (!context.WebSockets.IsWebSocketRequest)
@@ -42,12 +44,13 @@ public static class ConnectionEndpoints
             connectionManager.CloseConnection(id);
             return TypedResults.Ok();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Websocket connection for {id} failed", id);
             connectionManager.CloseConnection(id);
         }
 
-        return TypedResults.Ok();
+        return Results.Empty;
     }
 
     private static async Task ReadMessages(WebSocket socket, NodeConnectionInfo info, MessageHandler messageHandler,

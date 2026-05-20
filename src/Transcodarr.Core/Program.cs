@@ -16,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<ConnectionManager>();
 builder.Services.AddSingleton<MessageHandler>();
+builder.Services.AddTransient<WebSocketConnectionService>();
 
 
 var app = builder.Build();

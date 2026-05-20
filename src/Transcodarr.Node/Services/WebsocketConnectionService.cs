@@ -43,18 +43,12 @@ public class WebsocketConnectionService : BackgroundService
     {
         var cts = new CancellationTokenSource();
         var linked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, stoppingToken);
-        WebSocket? ws = null;
-        while (ws is null)
+        WebSocket? ws;
+        while ((ws = await _connectionManager.ConnectToServerAsync(linked.Token)) is null)
         {
-            if (linked.Token.IsCancellationRequested)
-            {
-                return;
-            }
-
-            ws = await _connectionManager.ConnectToServerAsync(linked.Token);
-            await Task.Delay(TimeSpan.FromSeconds(30), linked.Token);
+            await Task.Delay(TimeSpan.FromSeconds(10), linked.Token);
         }
-
+        _logger.LogInformation("Connection to core started");
 
         await _connectionManager.SendAsync(new NodeInfoMessage(new NodeInfo
         {
