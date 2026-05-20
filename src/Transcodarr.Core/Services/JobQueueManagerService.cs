@@ -75,6 +75,7 @@ public class JobQueueManagerService : BackgroundService
                     CorrelationId = Guid.NewGuid(),
                 };
                 await _webSocketConnectionService.SendFireAndForgetAsync(request, conn, stoppingToken);
+                conn.FreeSlots--;
             }
 
             //get predicted available processing slots

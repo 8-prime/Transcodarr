@@ -22,6 +22,8 @@ public record ProbeResponse(FileProbeResult? Result) : SocketMessage;
 
 public record NodeInfoMessage(NodeInfo Info) : SocketMessage;
 
+public record TokenUpdateMessage() : SocketMessage;
+
 public record TranscodeRequest(string FilePath, string OutputPath, Guid FileInfoId, TranscodeQualitySettings QualitySettings)
     : SocketMessage;
 

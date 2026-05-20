@@ -10,16 +10,21 @@ namespace Transcodarr.Node.Services;
 public class WebsocketConnectionService : BackgroundService
 {
     private readonly ConnectionManager _connectionManager;
+    private readonly NodeInfoManager _nodeInfoManager;
+    private readonly SlotTracker _slotTracker;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly NodeConfiguration _configuration;
     private readonly ILogger<WebsocketConnectionService> _logger;
 
     public WebsocketConnectionService(ConnectionManager connectionManager, IServiceScopeFactory serviceScopeFactory,
-        IOptions<NodeConfiguration> configuration, ILogger<WebsocketConnectionService> logger)
+        IOptions<NodeConfiguration> configuration, ILogger<WebsocketConnectionService> logger, SlotTracker slotTracker,
+        NodeInfoManager nodeInfoManager)
     {
         _connectionManager = connectionManager;
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
+        _slotTracker = slotTracker;
+        _nodeInfoManager = nodeInfoManager;
         _configuration = configuration.Value;
     }
 
@@ -48,19 +53,14 @@ public class WebsocketConnectionService : BackgroundService
         {
             await Task.Delay(TimeSpan.FromSeconds(10), linked.Token);
         }
+
         _logger.LogInformation("Connection to core started");
 
         await _connectionManager.SendAsync(new NodeInfoMessage(new NodeInfo
         {
             Name = _configuration.NodeId,
-            EncoderCapabilities =
-            [
-                new EncoderCapability
-                {
-                    Slots = 1,
-                    EncoderName = "hevc_nvenc"
-                }
-            ]
+            EncoderCapabilities = _nodeInfoManager.Capabilities,
+            Slots = _slotTracker.AvailableSlots
         })
         {
             CorrelationId = Guid.NewGuid()
@@ -83,6 +83,7 @@ public class WebsocketConnectionService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            _logger.LogDebug("Sending heartbeat");
             await _connectionManager.SendAsync(new Heartbeat
             {
                 CorrelationId = Guid.NewGuid()
@@ -134,6 +135,8 @@ public class WebsocketConnectionService : BackgroundService
                     var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodeService>();
                     await transcodeService.RunTranscodeAsync(transcodeRequest.FilePath, transcodeRequest.OutputPath,
                         transcodeRequest.QualitySettings, stoppingToken);
+                    break;
+                default:
                     break;
             }
         }

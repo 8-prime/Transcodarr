@@ -23,6 +23,10 @@ public class TranscodeManager : BackgroundService
 
     private async Task ProcessTranscodes(CancellationToken stoppingToken)
     {
+        if (_semaphoreSlim.CurrentCount == 0)
+        {
+            
+        }
         await _semaphoreSlim.WaitAsync(stoppingToken);
         try
         {

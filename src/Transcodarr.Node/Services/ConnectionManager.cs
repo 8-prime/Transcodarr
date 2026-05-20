@@ -12,7 +12,6 @@ public class ConnectionManager
     private WebSocket? _webSocket;
     private readonly ILogger<ConnectionManager> _logger;
 
-
     public ConnectionManager(IOptions<NodeConfiguration> configuration, ILogger<ConnectionManager> logger)
     {
         _logger = logger;
