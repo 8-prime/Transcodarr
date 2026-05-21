@@ -1,43 +1,72 @@
-﻿namespace Transcodarr.Node.Services;
+﻿using Transcodarr.Shared.DTOs;
+
+namespace Transcodarr.Node.Services;
 
 public class TranscodeManager : BackgroundService
 {
+    private readonly ILogger<TranscodeManager> _logger;
     private readonly ConnectionManager _connectionManager;
     private readonly TranscodesQueue _transcodeRequests;
-    private readonly SemaphoreSlim _semaphoreSlim;
+    private readonly TranscodeService _transcodeService;
+    private readonly SlotTracker _slotTracker;
+    private readonly List<Task<TranscodeResponse>> _transcodeJos = [];
 
-    public TranscodeManager(ConnectionManager connectionManager, TranscodesQueue queue)
+    public TranscodeManager(ConnectionManager connectionManager, TranscodesQueue queue,
+        ILogger<TranscodeManager> logger, SlotTracker slotTracker, TranscodeService transcodeService)
     {
         _connectionManager = connectionManager;
         _transcodeRequests = queue;
-        //TODO: determine max concurrent streams supported on hardware level
-        _semaphoreSlim = new SemaphoreSlim(1, 1);
+        _logger = logger;
+        _slotTracker = slotTracker;
+        _transcodeService = transcodeService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            await ProcessTranscodes(stoppingToken);
+        }
+    }
+
+    private async Task AwaitCompletions(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if (_transcodeJos.Count == 0)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                continue;
+            }
+
+            var completed = await Task.WhenAny(_transcodeJos);
+            await _connectionManager.SendAsync(completed.Result, stoppingToken);
+            await _connectionManager.SendAsync(new IncrementSlotsMessage
+            {
+                CorrelationId = Guid.NewGuid(),
+            }, stoppingToken);
+            _transcodeJos.Remove(completed);
+            _slotTracker.Release(completed.Result.EncoderSettingsSnapshot.EncoderName);
         }
     }
 
     private async Task ProcessTranscodes(CancellationToken stoppingToken)
     {
-        if (_semaphoreSlim.CurrentCount == 0)
+        await foreach (var request in _transcodeRequests.TranscodeRequests.Reader.ReadAllAsync(
+                           stoppingToken))
         {
-            
-        }
-        await _semaphoreSlim.WaitAsync(stoppingToken);
-        try
-        {
-            await foreach (var request in _transcodeRequests.TranscodeRequests.Reader.ReadAllAsync(stoppingToken))
+            var firstFreeEncoder = _slotTracker.EncodersWithCapacity.FirstOrDefault();
+            if (firstFreeEncoder == null || !_slotTracker.TryAcquire(firstFreeEncoder))
             {
-                
+                await _connectionManager.SendAsync(new TranscodeRejection(request.JobLeaseId)
+                {
+                    CorrelationId = Guid.NewGuid(),
+                }, stoppingToken);
+                continue;
             }
-        }
-        finally
-        {
-            _semaphoreSlim.Release();
+
+            _transcodeJos.Add(_transcodeService.RunTranscodeAsync(request.JobLeaseId, request.FilePath,
+                request.OutputPath, request.QualitySettings, firstFreeEncoder, stoppingToken));
         }
     }
 }

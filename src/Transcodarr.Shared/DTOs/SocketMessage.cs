@@ -24,13 +24,20 @@ public record NodeInfoMessage(NodeInfo Info) : SocketMessage;
 
 public record TokenUpdateMessage() : SocketMessage;
 
-public record TranscodeRequest(string FilePath, string OutputPath, Guid FileInfoId, TranscodeQualitySettings QualitySettings)
+public record TranscodeRequest(
+    string FilePath,
+    string OutputPath,
+    Guid JobLeaseId,
+    TranscodeQualitySettings QualitySettings)
     : SocketMessage;
 
+public record TranscodeRejection(Guid JobLeaseId) : SocketMessage;
+
+public record IncrementSlotsMessage : SocketMessage;
+
 public record TranscodeResponse(
-    Guid FileInfoId,
     Guid JobLeaseId,
     bool Success,
-    string EncoderSettingsSnapshot,
+    TranscoderSnapshot EncoderSettingsSnapshot,
     long OutputSizeBytes,
     double VMafScore) : SocketMessage;

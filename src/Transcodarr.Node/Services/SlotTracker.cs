@@ -1,23 +1,36 @@
-﻿namespace Transcodarr.Node.Services;
+﻿using Transcodearr.Shared;
+
+namespace Transcodarr.Node.Services;
 
 public class SlotTracker
 {
-    private SemaphoreSlim? _semaphore;
+    private readonly Dictionary<string, SemaphoreSlim> _semaphores = [];
 
-    public void Initialize(int totalSlots)
+    public void Initialize(IEnumerable<EncoderCapability> capabilities)
     {
-        _semaphore = new SemaphoreSlim(totalSlots, totalSlots);
+        foreach (var capability in capabilities)
+        {
+            _semaphores.TryAdd(capability.EncoderName, new SemaphoreSlim(capability.Slots, capability.Slots));
+        }
     }
 
-    public bool TryAcquire()
+    public bool TryAcquire(string encoderName)
     {
-        return _semaphore is not null && _semaphore.Wait(0);
+        return _semaphores.TryGetValue(encoderName, out var semaphore) && semaphore.Wait(0);
     }
 
-    public void Release()
+    public void Release(string encoderName)
     {
-        _semaphore?.Release();
+        if (!_semaphores.TryGetValue(encoderName, out var semaphore))
+        {
+            return;
+        }
+
+        semaphore.Release();
     }
 
-    public int AvailableSlots => _semaphore?.CurrentCount ?? 0;
+    public int AvailableSlots => _semaphores.Select(x => x.Value.CurrentCount).Sum();
+    
+    public IEnumerable<string> EncodersWithCapacity =>
+        _semaphores.Where(kvp => kvp.Value.CurrentCount > 0).Select(kvp => kvp.Key);
 }

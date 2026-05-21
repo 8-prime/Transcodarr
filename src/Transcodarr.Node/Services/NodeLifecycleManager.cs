@@ -13,7 +13,7 @@ public partial class NodeLifecycleManager(
     {
         var encoderCapabilities = await capabilities.GetEncodersAsync(ct);
         LogStartingWithEncoders(logger, encoderCapabilities);
-        slotTracker.Initialize(encoderCapabilities.Sum(e => e.Slots));
+        slotTracker.Initialize(encoderCapabilities);
         logger.LogInformation("Initialized transcode slot tracker");
         nodeInfoManager.Initialize(encoderCapabilities);
         logger.LogInformation("Initialized transcode capabilities");

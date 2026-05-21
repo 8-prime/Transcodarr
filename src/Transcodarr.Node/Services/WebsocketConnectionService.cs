@@ -132,9 +132,8 @@ public class WebsocketConnectionService : BackgroundService
                     }, stoppingToken);
                     break;
                 case TranscodeRequest transcodeRequest:
-                    var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodeService>();
-                    await transcodeService.RunTranscodeAsync(transcodeRequest.FilePath, transcodeRequest.OutputPath,
-                        transcodeRequest.QualitySettings, stoppingToken);
+                    var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodesQueue>();
+                    await transcodeService.TranscodeRequests.Writer.WriteAsync(transcodeRequest, stoppingToken);
                     break;
                 default:
                     break;
