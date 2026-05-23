@@ -2,7 +2,7 @@
 using FFMpegCore.Exceptions;
 using Transcodearr.Shared;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.NodeState;
 
 public class CapabilitiesService(ILogger<CapabilitiesService> logger)
 {

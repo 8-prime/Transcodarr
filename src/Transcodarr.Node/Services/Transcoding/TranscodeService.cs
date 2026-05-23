@@ -3,7 +3,7 @@ using Transcodarr.Node.Common.Mapping;
 using Transcodarr.Shared.DTOs;
 using Transcodearr.Shared.DTOs;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.Transcoding;
 
 public class TranscodeService
 {
@@ -17,6 +17,7 @@ public class TranscodeService
                 .WithConstantRateFactor(transcodeQualitySettings.ConstantRateFactor)
                 .WithAudioCodec(transcodeQualitySettings.DesiredAudioCodec.Map())
                 .WithFastStart())
+            .NotifyOnProgress((p) => { })
             //TODO: use notify progress and send update to core.NotifyOnProgress()
             .ProcessAsynchronously();
 

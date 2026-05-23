@@ -1,7 +1,7 @@
 ﻿using FFMpegCore;
 using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.Transcoding;
 
 public class FileProbeService
 {

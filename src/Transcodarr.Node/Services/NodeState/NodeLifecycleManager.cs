@@ -1,6 +1,6 @@
 ﻿using Transcodearr.Shared;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.NodeState;
 
 public partial class NodeLifecycleManager(
     CapabilitiesService capabilities,

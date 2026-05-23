@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Transcodarr.Node.Common.Models;
 using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.Connection;
 
 public class ConnectionManager
 {

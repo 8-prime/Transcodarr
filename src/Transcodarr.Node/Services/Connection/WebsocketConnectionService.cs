@@ -2,10 +2,12 @@
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Transcodarr.Node.Common.Models;
+using Transcodarr.Node.Services.NodeState;
+using Transcodarr.Node.Services.Transcoding;
 using Transcodarr.Shared.DTOs;
 using Transcodearr.Shared;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.Connection;
 
 public class WebsocketConnectionService : BackgroundService
 {

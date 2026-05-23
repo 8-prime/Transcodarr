@@ -1,7 +1,7 @@
 ﻿using System.Threading.Channels;
 using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.Transcoding;
 
 public class TranscodesQueue
 {

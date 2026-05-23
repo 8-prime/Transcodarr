@@ -9,6 +9,7 @@ namespace Transcodarr.Shared.DTOs;
 [JsonDerivedType(typeof(ProbeRequest), nameof(ProbeRequest))]
 [JsonDerivedType(typeof(NodeInfoMessage), nameof(NodeInfoMessage))]
 [JsonDerivedType(typeof(Heartbeat), nameof(Heartbeat))]
+[JsonDerivedType(typeof(TranscodeProgress), nameof(TranscodeProgress))]
 public abstract record SocketMessage
 {
     public required Guid CorrelationId { get; init; }
@@ -41,3 +42,5 @@ public record TranscodeResponse(
     TranscoderSnapshot EncoderSettingsSnapshot,
     long OutputSizeBytes,
     double VMafScore) : SocketMessage;
+
+public record TranscodeProgress(double ProgressPercent) : SocketMessage;

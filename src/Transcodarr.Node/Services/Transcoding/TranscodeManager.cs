@@ -1,6 +1,8 @@
-﻿using Transcodarr.Shared.DTOs;
+﻿using Transcodarr.Node.Services.Connection;
+using Transcodarr.Node.Services.NodeState;
+using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.Transcoding;
 
 public class TranscodeManager : BackgroundService
 {
@@ -23,10 +25,7 @@ public class TranscodeManager : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            await ProcessTranscodes(stoppingToken);
-        }
+        await Task.WhenAll(ProcessTranscodes(stoppingToken), AwaitCompletions(stoppingToken));
     }
 
     private async Task AwaitCompletions(CancellationToken stoppingToken)

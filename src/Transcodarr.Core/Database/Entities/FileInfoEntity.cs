@@ -8,9 +8,7 @@ public class FileInfoEntity
     public Guid Id { get; init; }
     public Guid LibraryId { get; init; }
     [MaxLength(4096)] public required string Path { get; init; }
-    public ProcessingState ProcessingState { get; set; }
     public DateTimeOffset LastModified { get; set; }
-
     // populated after successful probe job
     [MaxLength(100)] public required string VideoCodec { get; set; }
     public int Width { get; set; }

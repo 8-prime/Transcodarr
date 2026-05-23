@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Transcodearr.Shared;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.NodeState;
 
 public class NodeInfoManager
 {

@@ -1,6 +1,6 @@
 ﻿using Transcodearr.Shared;
 
-namespace Transcodarr.Node.Services;
+namespace Transcodarr.Node.Services.NodeState;
 
 public class SlotTracker
 {
@@ -30,7 +30,7 @@ public class SlotTracker
     }
 
     public int AvailableSlots => _semaphores.Select(x => x.Value.CurrentCount).Sum();
-    
+
     public IEnumerable<string> EncodersWithCapacity =>
         _semaphores.Where(kvp => kvp.Value.CurrentCount > 0).Select(kvp => kvp.Key);
 }

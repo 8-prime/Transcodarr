@@ -65,8 +65,7 @@ public partial class MessageHandler
             return;
         }
 
-        var fileInfo = context.FileInfos.FirstOrDefault(f => f.Id == transcodeResponse.FileInfoId);
-        var jobLease = context.TranscodeJobs.FirstOrDefault(j => j.Id == transcodeResponse.JobLeaseId);
+        var jobLease = context.TranscodeJobs.Include(j => j.).FirstOrDefault(j => j.Id == transcodeResponse.JobLeaseId);
         if (fileInfo == null || jobLease == null)
         {
             throw new ApplicationException(
