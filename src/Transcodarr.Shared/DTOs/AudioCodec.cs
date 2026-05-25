@@ -4,5 +4,5 @@ public enum AudioCodec
 {
     Aac,
     Ac3,
-    Copy
+    Copy,
 }

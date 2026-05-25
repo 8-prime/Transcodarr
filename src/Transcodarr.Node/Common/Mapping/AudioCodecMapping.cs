@@ -11,7 +11,7 @@ public static class AudioCodecMapping
             Transcodearr.Shared.DTOs.AudioCodec.Aac => AudioCodec.Aac,
             Transcodearr.Shared.DTOs.AudioCodec.Ac3 => AudioCodec.Ac3,
             Transcodearr.Shared.DTOs.AudioCodec.Copy => AudioCodec.Copy,
-            _ => throw new ArgumentOutOfRangeException(nameof(audioCodec), audioCodec, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(audioCodec), audioCodec, null),
         };
     }
 }

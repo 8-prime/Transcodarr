@@ -19,17 +19,21 @@ public static class ConnectionEndpoints
         return endpoints;
     }
 
-
     private static Ok<ICollection<NodeConnectionInfo>> GetConnections(
-        [FromServices] ConnectionManager connectionManager)
+        [FromServices] ConnectionManager connectionManager
+    )
     {
         return TypedResults.Ok(connectionManager.GetConnections());
     }
 
-    private static async Task<IResult> MapAddConnection(string id, HttpContext context,
-        [FromServices] ConnectionManager connectionManager, [FromServices] MessageHandler messageHandler,
+    private static async Task<IResult> MapAddConnection(
+        string id,
+        HttpContext context,
+        [FromServices] ConnectionManager connectionManager,
+        [FromServices] MessageHandler messageHandler,
         [FromServices] ILoggerFactory loggerFactory,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var logger = loggerFactory.CreateLogger(nameof(ConnectionEndpoints));
         try
@@ -54,8 +58,12 @@ public static class ConnectionEndpoints
         return Results.Empty;
     }
 
-    private static async Task ReadMessages(WebSocket socket, NodeConnectionInfo info, MessageHandler messageHandler,
-        CancellationToken cancellationToken)
+    private static async Task ReadMessages(
+        WebSocket socket,
+        NodeConnectionInfo info,
+        MessageHandler messageHandler,
+        CancellationToken cancellationToken
+    )
     {
         var buffer = new ArraySegment<byte>(new byte[4096]);
 
@@ -76,9 +84,12 @@ public static class ConnectionEndpoints
             } while (!result.EndOfMessage);
 
             ms.Seek(0, SeekOrigin.Begin);
-            var message =
-                await JsonSerializer.DeserializeAsync<SocketMessage>(ms, cancellationToken: cancellationToken);
-            if (message is null) continue;
+            var message = await JsonSerializer.DeserializeAsync<SocketMessage>(
+                ms,
+                cancellationToken: cancellationToken
+            );
+            if (message is null)
+                continue;
             if (info.PendingRequests.TryGetValue(message.CorrelationId, out var tcs))
             {
                 tcs.SetResult(message);

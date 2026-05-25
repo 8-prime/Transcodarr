@@ -11,7 +11,6 @@ public class TranscodarrDbContext : DbContext
     public DbSet<TranscodeJobEntity> TranscodeJobs { get; set; }
     public DbSet<TranscodeResultEntity> TranscodeResults { get; set; }
 
-    public TranscodarrDbContext(DbContextOptions<TranscodarrDbContext> options) : base(options)
-    {
-    }
+    public TranscodarrDbContext(DbContextOptions<TranscodarrDbContext> options)
+        : base(options) { }
 }

@@ -5,5 +5,6 @@ namespace Transcodarr.Node.Services.Transcoding;
 
 public class TranscodesQueue
 {
-    public Channel<TranscodeRequest> TranscodeRequests { get; init; } = Channel.CreateUnbounded<TranscodeRequest>();
+    public Channel<TranscodeRequest> TranscodeRequests { get; init; } =
+        Channel.CreateUnbounded<TranscodeRequest>();
 }

@@ -11,11 +11,7 @@ public class ConnectionManager
 
     public NodeConnectionInfo AddConnection(WebSocket socket, string nodeId)
     {
-        var newConnection = new NodeConnectionInfo
-        {
-            ConnectionId = nodeId,
-            WebSocket = socket
-        };
+        var newConnection = new NodeConnectionInfo { ConnectionId = nodeId, WebSocket = socket };
         _connections.AddOrUpdate(nodeId, newConnection, (_, _) => newConnection);
         return newConnection;
     }
@@ -30,11 +26,13 @@ public class ConnectionManager
         return _connections.Values;
     }
 
-    public bool TryGetConnection(string nodeId, [NotNullWhen(true)] out NodeConnectionInfo? connection)
+    public bool TryGetConnection(
+        string nodeId,
+        [NotNullWhen(true)] out NodeConnectionInfo? connection
+    )
     {
         return _connections.TryGetValue(nodeId, out connection);
     }
-
 
     public int GetTotalFreeSlots()
     {

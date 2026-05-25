@@ -17,16 +17,22 @@ public class LibraryService
         _fileProbeService = fileProbeService;
     }
 
-    public async Task ScanLibraryAsync(string libraryPath, Guid libraryId,
-        CancellationToken stoppingToken)
+    public async Task ScanLibraryAsync(
+        string libraryPath,
+        Guid libraryId,
+        CancellationToken stoppingToken
+    )
     {
-        var knownFiles =
-            await _dbContext.MediaFiles.AsNoTracking().Include(f => f.Library)
-                .ToDictionaryAsync(f => f.Library.FileSystemPath, stoppingToken);
+        var knownFiles = await _dbContext
+            .MediaFiles.AsNoTracking()
+            .Include(f => f.Library)
+            .ToDictionaryAsync(f => f.Library.FileSystemPath, stoppingToken);
 
-        foreach (var file in Directory.EnumerateFiles(libraryPath, "*",
-                     SearchOption.AllDirectories).Where(f =>
-                     FileTypeConstants.IsVideoFileRegex().IsMatch(Path.GetExtension(f))))
+        foreach (
+            var file in Directory
+                .EnumerateFiles(libraryPath, "*", SearchOption.AllDirectories)
+                .Where(f => FileTypeConstants.IsVideoFileRegex().IsMatch(Path.GetExtension(f)))
+        )
         {
             var fi = new FileInfo(file);
             if (!knownFiles.Remove(file, out var libraryScanInfo))
@@ -40,8 +46,10 @@ public class LibraryService
                 continue;
             }
 
-            var mediaFile =
-                await _dbContext.MediaFiles.FirstOrDefaultAsync(f => f.Path == file, stoppingToken);
+            var mediaFile = await _dbContext.MediaFiles.FirstOrDefaultAsync(
+                f => f.Path == file,
+                stoppingToken
+            );
             if (mediaFile is null)
             {
                 continue;
@@ -53,8 +61,7 @@ public class LibraryService
         }
     }
 
-    public async Task AddNewFile(string file, Guid libraryId,
-        CancellationToken stoppingToken)
+    public async Task AddNewFile(string file, Guid libraryId, CancellationToken stoppingToken)
     {
         var fi = new FileInfo(file);
         var newFileInfo = new MediaFileEntity
@@ -64,7 +71,7 @@ public class LibraryService
             Status = TranscodeStatus.Discovered,
             FileModifiedAt = fi.LastWriteTimeUtc,
             DiscoveredAt = DateTimeOffset.UtcNow,
-            LibraryId = libraryId
+            LibraryId = libraryId,
         };
         _dbContext.MediaFiles.Add(newFileInfo);
 

@@ -14,17 +14,21 @@ public class ConfigurationService
         _dbFactory = dbFactory;
     }
 
-    public AppConfigurationEntity Current => _config
-                                             ?? throw new InvalidOperationException("Configuration not loaded");
+    public AppConfigurationEntity Current =>
+        _config ?? throw new InvalidOperationException("Configuration not loaded");
 
     public async Task InitializeAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        _config = await db.AppConfigurations.FirstOrDefaultAsync(ct)
-                  ?? throw new InvalidOperationException("No configuration found in database");
+        _config =
+            await db.AppConfigurations.FirstOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException("No configuration found in database");
     }
 
-    public async Task UpdateAsync(Action<AppConfigurationEntity> apply, CancellationToken ct = default)
+    public async Task UpdateAsync(
+        Action<AppConfigurationEntity> apply,
+        CancellationToken ct = default
+    )
     {
         apply(_config!);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);

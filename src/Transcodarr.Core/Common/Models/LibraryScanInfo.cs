@@ -6,5 +6,5 @@ public struct LibraryScanInfo
     public Guid FileInfoId { get; set; }
     public string LibraryPath { get; set; }
     public long FileSize { get; set; }
-    public DateTimeOffset  LastModified { get; set; }
+    public DateTimeOffset LastModified { get; set; }
 }

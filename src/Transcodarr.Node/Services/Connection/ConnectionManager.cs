@@ -12,7 +12,10 @@ public class ConnectionManager
     private WebSocket? _webSocket;
     private readonly ILogger<ConnectionManager> _logger;
 
-    public ConnectionManager(IOptions<NodeConfiguration> configuration, ILogger<ConnectionManager> logger)
+    public ConnectionManager(
+        IOptions<NodeConfiguration> configuration,
+        ILogger<ConnectionManager> logger
+    )
     {
         _logger = logger;
         _configuration = configuration.Value;
@@ -37,7 +40,8 @@ public class ConnectionManager
         return _webSocket;
     }
 
-    public async Task SendAsync<T>(T message, CancellationToken stoppingToken) where T : SocketMessage
+    public async Task SendAsync<T>(T message, CancellationToken stoppingToken)
+        where T : SocketMessage
     {
         if (_webSocket == null)
         {
@@ -45,7 +49,11 @@ public class ConnectionManager
         }
 
         Memory<byte> payLoad = JsonSerializer.SerializeToUtf8Bytes<SocketMessage>(message);
-        await _webSocket.SendAsync(payLoad, WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage,
-            stoppingToken);
+        await _webSocket.SendAsync(
+            payLoad,
+            WebSocketMessageType.Text,
+            WebSocketMessageFlags.EndOfMessage,
+            stoppingToken
+        );
     }
 }

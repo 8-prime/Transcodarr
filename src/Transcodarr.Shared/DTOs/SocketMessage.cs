@@ -27,8 +27,8 @@ public record TranscodeRequest(
     string FilePath,
     string OutputPath,
     Guid JobLeaseId,
-    TranscodeQualitySettings QualitySettings)
-    : SocketMessage;
+    TranscodeQualitySettings QualitySettings
+) : SocketMessage;
 
 public record TranscodeRejection(Guid JobLeaseId) : SocketMessage;
 
@@ -39,6 +39,7 @@ public record TranscodeResponse(
     bool Success,
     TranscoderSnapshot EncoderSettingsSnapshot,
     long OutputSizeBytes,
-    double VMafScore) : SocketMessage;
+    double VMafScore
+) : SocketMessage;
 
 public record TranscodeProgress(double ProgressPercent) : SocketMessage;

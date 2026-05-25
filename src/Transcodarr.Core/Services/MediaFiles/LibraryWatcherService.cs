@@ -16,8 +16,11 @@ public class LibraryWatcherService : BackgroundService
     private readonly Channel<FileSystemEventArgs> _fileSystemWatcherEvents =
         Channel.CreateBounded<FileSystemEventArgs>(200);
 
-    public LibraryWatcherService(LibraryService libraryService, IServiceScopeFactory scopeFactory,
-        ILogger<LibraryWatcherService> logger)
+    public LibraryWatcherService(
+        LibraryService libraryService,
+        IServiceScopeFactory scopeFactory,
+        ILogger<LibraryWatcherService> logger
+    )
     {
         _libraryService = libraryService;
         _scopeFactory = scopeFactory;
@@ -32,13 +35,25 @@ public class LibraryWatcherService : BackgroundService
 
             await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-            var libraries = await dbContext.Libraries.ToDictionaryAsync(l => l.Id, l => l, stoppingToken);
-            var newLibraries = libraries.Where(l => !_fileSystemWatchers.ContainsKey(l.Key)).Select(l => l.Value);
-            var staleLibraries = _fileSystemWatchers.Where(w => !libraries.ContainsKey(w.Key)).Select(l => l.Key);
+            var libraries = await dbContext.Libraries.ToDictionaryAsync(
+                l => l.Id,
+                l => l,
+                stoppingToken
+            );
+            var newLibraries = libraries
+                .Where(l => !_fileSystemWatchers.ContainsKey(l.Key))
+                .Select(l => l.Value);
+            var staleLibraries = _fileSystemWatchers
+                .Where(w => !libraries.ContainsKey(w.Key))
+                .Select(l => l.Key);
 
             foreach (var newLibrary in newLibraries)
             {
-                await SetupFileSystemWatcher(newLibrary.Id, newLibrary.FileSystemPath, stoppingToken);
+                await SetupFileSystemWatcher(
+                    newLibrary.Id,
+                    newLibrary.FileSystemPath,
+                    stoppingToken
+                );
             }
 
             foreach (var staleLibraryId in staleLibraries)
@@ -50,17 +65,27 @@ public class LibraryWatcherService : BackgroundService
         }
     }
 
-
     private async Task HandleFileSystemWatcherEvents(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested &&
-               _fileSystemWatcherEvents.Reader.TryRead(out var fileSystemEventArgs))
+        while (
+            !stoppingToken.IsCancellationRequested
+            && _fileSystemWatcherEvents.Reader.TryRead(out var fileSystemEventArgs)
+        )
         {
-            if (fileSystemEventArgs is RenamedEventArgs renamed &&
-                renamed.OldFullPath.EndsWith(FileTypeConstants.TempFileSuffix, StringComparison.OrdinalIgnoreCase))
+            if (
+                fileSystemEventArgs is RenamedEventArgs renamed
+                && renamed.OldFullPath.EndsWith(
+                    FileTypeConstants.TempFileSuffix,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
                 continue;
-            if (fileSystemEventArgs.FullPath.EndsWith(FileTypeConstants.TempFileSuffix,
-                    StringComparison.OrdinalIgnoreCase))
+            if (
+                fileSystemEventArgs.FullPath.EndsWith(
+                    FileTypeConstants.TempFileSuffix,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
                 continue;
             await using var scope = _scopeFactory.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
@@ -90,19 +115,28 @@ public class LibraryWatcherService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to handle {ChangeType} event for {Path}", fileSystemEventArgs.ChangeType,
-                    fileSystemEventArgs.FullPath);
+                _logger.LogError(
+                    ex,
+                    "Failed to handle {ChangeType} event for {Path}",
+                    fileSystemEventArgs.ChangeType,
+                    fileSystemEventArgs.FullPath
+                );
             }
         }
     }
 
-    private async Task HandleFileRenamed(CancellationToken stoppingToken,
+    private async Task HandleFileRenamed(
+        CancellationToken stoppingToken,
         FileSystemEventArgs fileSystemEventArgs,
-        TranscodarrDbContext db, AsyncServiceScope scope)
+        TranscodarrDbContext db,
+        AsyncServiceScope scope
+    )
     {
         var renamedEvent = (RenamedEventArgs)fileSystemEventArgs;
-        var existing = await db.MediaFiles.FirstOrDefaultAsync(f => f.Path == renamedEvent.OldFullPath,
-            stoppingToken);
+        var existing = await db.MediaFiles.FirstOrDefaultAsync(
+            f => f.Path == renamedEvent.OldFullPath,
+            stoppingToken
+        );
         if (existing is not null)
         {
             existing.Path = renamedEvent.FullPath;
@@ -118,12 +152,17 @@ public class LibraryWatcherService : BackgroundService
         await libraryService.AddNewFile(fileSystemEventArgs.FullPath, libraryId, stoppingToken);
     }
 
-    private static async Task HandleFileChanged(CancellationToken stoppingToken, TranscodarrDbContext db,
-        FileSystemEventArgs fileSystemEventArgs, AsyncServiceScope scope)
+    private static async Task HandleFileChanged(
+        CancellationToken stoppingToken,
+        TranscodarrDbContext db,
+        FileSystemEventArgs fileSystemEventArgs,
+        AsyncServiceScope scope
+    )
     {
-        var changed =
-            await db.MediaFiles.FirstOrDefaultAsync(f => f.Path == fileSystemEventArgs.FullPath,
-                stoppingToken);
+        var changed = await db.MediaFiles.FirstOrDefaultAsync(
+            f => f.Path == fileSystemEventArgs.FullPath,
+            stoppingToken
+        );
         if (changed is not null)
         {
             var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
@@ -134,23 +173,33 @@ public class LibraryWatcherService : BackgroundService
         }
     }
 
-    private static async Task HandleFileDeleted(CancellationToken stoppingToken, TranscodarrDbContext db,
-        FileSystemEventArgs fileSystemEventArgs)
+    private static async Task HandleFileDeleted(
+        CancellationToken stoppingToken,
+        TranscodarrDbContext db,
+        FileSystemEventArgs fileSystemEventArgs
+    )
     {
-        var deleted =
-            await db.MediaFiles.FirstOrDefaultAsync(f => f.Path == fileSystemEventArgs.FullPath,
-                stoppingToken);
+        var deleted = await db.MediaFiles.FirstOrDefaultAsync(
+            f => f.Path == fileSystemEventArgs.FullPath,
+            stoppingToken
+        );
         if (deleted is not null)
         {
             db.MediaFiles.Remove(deleted);
         }
     }
 
-    private async Task HandleFileCreated(CancellationToken stoppingToken, FileSystemEventArgs fileSystemEventArgs,
-        AsyncServiceScope scope)
+    private async Task HandleFileCreated(
+        CancellationToken stoppingToken,
+        FileSystemEventArgs fileSystemEventArgs,
+        AsyncServiceScope scope
+    )
     {
-        if (!FileTypeConstants.IsVideoFileRegex()
-                .IsMatch(Path.GetExtension(fileSystemEventArgs.FullPath)))
+        if (
+            !FileTypeConstants
+                .IsVideoFileRegex()
+                .IsMatch(Path.GetExtension(fileSystemEventArgs.FullPath))
+        )
         {
             return;
         }
@@ -162,7 +211,11 @@ public class LibraryWatcherService : BackgroundService
         }
 
         var libraryService = scope.ServiceProvider.GetRequiredService<LibraryService>();
-        await libraryService.AddNewFile(fileSystemEventArgs.FullPath, libraryId.Value, stoppingToken);
+        await libraryService.AddNewFile(
+            fileSystemEventArgs.FullPath,
+            libraryId.Value,
+            stoppingToken
+        );
     }
 
     private Guid? GetLibraryIdForPath(string filePath)
@@ -189,7 +242,11 @@ public class LibraryWatcherService : BackgroundService
         _fileSystemWatchers.Remove(libraryId);
     }
 
-    private async Task SetupFileSystemWatcher(Guid libraryId, string fileSystemPath, CancellationToken stoppingToken)
+    private async Task SetupFileSystemWatcher(
+        Guid libraryId,
+        string fileSystemPath,
+        CancellationToken stoppingToken
+    )
     {
         if (_fileSystemWatchers.ContainsKey(libraryId))
         {

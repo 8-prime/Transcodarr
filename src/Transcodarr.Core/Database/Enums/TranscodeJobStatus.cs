@@ -5,5 +5,5 @@ public enum TranscodeJobStatus
     Active,
     Completed,
     TimedOut,
-    Failed
+    Failed,
 }

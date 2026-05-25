@@ -6,8 +6,8 @@ public partial class NodeLifecycleManager(
     CapabilitiesService capabilities,
     SlotTracker slotTracker,
     NodeInfoManager nodeInfoManager,
-    ILogger<NodeLifecycleManager> logger)
-    : IHostedLifecycleService
+    ILogger<NodeLifecycleManager> logger
+) : IHostedLifecycleService
 {
     public async Task StartingAsync(CancellationToken ct)
     {
@@ -20,11 +20,18 @@ public partial class NodeLifecycleManager(
     }
 
     public Task StartAsync(CancellationToken ct) => Task.CompletedTask;
+
     public Task StartedAsync(CancellationToken ct) => Task.CompletedTask;
+
     public Task StoppingAsync(CancellationToken ct) => Task.CompletedTask;
+
     public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+
     public Task StoppedAsync(CancellationToken ct) => Task.CompletedTask;
 
     [LoggerMessage(LogLevel.Debug, "Starting with {Encoders}")]
-    static partial void LogStartingWithEncoders(ILogger<NodeLifecycleManager> logger, List<EncoderCapability> Encoders);
+    static partial void LogStartingWithEncoders(
+        ILogger<NodeLifecycleManager> logger,
+        List<EncoderCapability> Encoders
+    );
 }

@@ -18,9 +18,14 @@ public class WebsocketConnectionService : BackgroundService
     private readonly NodeConfiguration _configuration;
     private readonly ILogger<WebsocketConnectionService> _logger;
 
-    public WebsocketConnectionService(ConnectionManager connectionManager, IServiceScopeFactory serviceScopeFactory,
-        IOptions<NodeConfiguration> configuration, ILogger<WebsocketConnectionService> logger, SlotTracker slotTracker,
-        NodeInfoManager nodeInfoManager)
+    public WebsocketConnectionService(
+        ConnectionManager connectionManager,
+        IServiceScopeFactory serviceScopeFactory,
+        IOptions<NodeConfiguration> configuration,
+        ILogger<WebsocketConnectionService> logger,
+        SlotTracker slotTracker,
+        NodeInfoManager nodeInfoManager
+    )
     {
         _connectionManager = connectionManager;
         _serviceScopeFactory = serviceScopeFactory;
@@ -29,7 +34,6 @@ public class WebsocketConnectionService : BackgroundService
         _nodeInfoManager = nodeInfoManager;
         _configuration = configuration.Value;
     }
-
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -58,19 +62,27 @@ public class WebsocketConnectionService : BackgroundService
 
         _logger.LogInformation("Connection to core started");
 
-        await _connectionManager.SendAsync(new NodeInfoMessage(new NodeInfo
-        {
-            Name = _configuration.NodeId,
-            EncoderCapabilities = _nodeInfoManager.Capabilities,
-            Slots = _slotTracker.AvailableSlots
-        })
-        {
-            CorrelationId = Guid.NewGuid()
-        }, linked.Token);
+        await _connectionManager.SendAsync(
+            new NodeInfoMessage(
+                new NodeInfo
+                {
+                    Name = _configuration.NodeId,
+                    EncoderCapabilities = _nodeInfoManager.Capabilities,
+                    Slots = _slotTracker.AvailableSlots,
+                }
+            )
+            {
+                CorrelationId = Guid.NewGuid(),
+            },
+            linked.Token
+        );
 
         try
         {
-            await Task.WhenAny(ProcessMessagesAsync(ws, linked.Token), SendHeartBeatsAsync(linked.Token));
+            await Task.WhenAny(
+                ProcessMessagesAsync(ws, linked.Token),
+                SendHeartBeatsAsync(linked.Token)
+            );
         }
         catch (Exception ex)
         {
@@ -86,10 +98,10 @@ public class WebsocketConnectionService : BackgroundService
         {
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             _logger.LogDebug("Sending heartbeat");
-            await _connectionManager.SendAsync(new Heartbeat
-            {
-                CorrelationId = Guid.NewGuid()
-            }, stoppingToken);
+            await _connectionManager.SendAsync(
+                new Heartbeat { CorrelationId = Guid.NewGuid() },
+                stoppingToken
+            );
         }
     }
 
@@ -114,8 +126,10 @@ public class WebsocketConnectionService : BackgroundService
             } while (!result.EndOfMessage);
 
             ms.Seek(0, SeekOrigin.Begin);
-            var message =
-                await JsonSerializer.DeserializeAsync<SocketMessage>(ms, cancellationToken: stoppingToken);
+            var message = await JsonSerializer.DeserializeAsync<SocketMessage>(
+                ms,
+                cancellationToken: stoppingToken
+            );
             if (message is null)
             {
                 continue;
@@ -126,16 +140,24 @@ public class WebsocketConnectionService : BackgroundService
             switch (message)
             {
                 case ProbeRequest probeRequest:
-                    var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
-                    var res = await fileProbeService.ProbeFileAsync(probeRequest.ProbeFilePath, stoppingToken);
-                    await _connectionManager.SendAsync(new ProbeResponse(res)
-                    {
-                        CorrelationId = probeRequest.CorrelationId
-                    }, stoppingToken);
+                    var fileProbeService =
+                        scope.ServiceProvider.GetRequiredService<FileProbeService>();
+                    var res = await fileProbeService.ProbeFileAsync(
+                        probeRequest.ProbeFilePath,
+                        stoppingToken
+                    );
+                    await _connectionManager.SendAsync(
+                        new ProbeResponse(res) { CorrelationId = probeRequest.CorrelationId },
+                        stoppingToken
+                    );
                     break;
                 case TranscodeRequest transcodeRequest:
-                    var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodesQueue>();
-                    await transcodeService.TranscodeRequests.Writer.WriteAsync(transcodeRequest, stoppingToken);
+                    var transcodeService =
+                        scope.ServiceProvider.GetRequiredService<TranscodesQueue>();
+                    await transcodeService.TranscodeRequests.Writer.WriteAsync(
+                        transcodeRequest,
+                        stoppingToken
+                    );
                     break;
                 default:
                     break;

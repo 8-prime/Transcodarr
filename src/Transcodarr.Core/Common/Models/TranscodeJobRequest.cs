@@ -1,6 +1,3 @@
 ﻿namespace Transcodarr.Core.Common.Models;
 
-public class TranscodeJobRequest
-{
-    
-}
+public class TranscodeJobRequest { }

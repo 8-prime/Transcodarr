@@ -13,8 +13,13 @@ public class TranscodeManager : BackgroundService
     private readonly SlotTracker _slotTracker;
     private readonly List<Task<TranscodeResponse>> _transcodeJos = [];
 
-    public TranscodeManager(ConnectionManager connectionManager, TranscodesQueue queue,
-        ILogger<TranscodeManager> logger, SlotTracker slotTracker, TranscodeService transcodeService)
+    public TranscodeManager(
+        ConnectionManager connectionManager,
+        TranscodesQueue queue,
+        ILogger<TranscodeManager> logger,
+        SlotTracker slotTracker,
+        TranscodeService transcodeService
+    )
     {
         _connectionManager = connectionManager;
         _transcodeRequests = queue;
@@ -40,10 +45,10 @@ public class TranscodeManager : BackgroundService
 
             var completed = await Task.WhenAny(_transcodeJos);
             await _connectionManager.SendAsync(completed.Result, stoppingToken);
-            await _connectionManager.SendAsync(new IncrementSlotsMessage
-            {
-                CorrelationId = Guid.NewGuid(),
-            }, stoppingToken);
+            await _connectionManager.SendAsync(
+                new IncrementSlotsMessage { CorrelationId = Guid.NewGuid() },
+                stoppingToken
+            );
             _transcodeJos.Remove(completed);
             _slotTracker.Release(completed.Result.EncoderSettingsSnapshot.EncoderName);
         }
@@ -51,21 +56,30 @@ public class TranscodeManager : BackgroundService
 
     private async Task ProcessTranscodes(CancellationToken stoppingToken)
     {
-        await foreach (var request in _transcodeRequests.TranscodeRequests.Reader.ReadAllAsync(
-                           stoppingToken))
+        await foreach (
+            var request in _transcodeRequests.TranscodeRequests.Reader.ReadAllAsync(stoppingToken)
+        )
         {
             var firstFreeEncoder = _slotTracker.EncodersWithCapacity.FirstOrDefault();
             if (firstFreeEncoder == null || !_slotTracker.TryAcquire(firstFreeEncoder))
             {
-                await _connectionManager.SendAsync(new TranscodeRejection(request.JobLeaseId)
-                {
-                    CorrelationId = Guid.NewGuid(),
-                }, stoppingToken);
+                await _connectionManager.SendAsync(
+                    new TranscodeRejection(request.JobLeaseId) { CorrelationId = Guid.NewGuid() },
+                    stoppingToken
+                );
                 continue;
             }
 
-            _transcodeJos.Add(_transcodeService.RunTranscodeAsync(request.JobLeaseId, request.FilePath,
-                request.OutputPath, request.QualitySettings, firstFreeEncoder, stoppingToken));
+            _transcodeJos.Add(
+                _transcodeService.RunTranscodeAsync(
+                    request.JobLeaseId,
+                    request.FilePath,
+                    request.OutputPath,
+                    request.QualitySettings,
+                    firstFreeEncoder,
+                    stoppingToken
+                )
+            );
         }
     }
 }

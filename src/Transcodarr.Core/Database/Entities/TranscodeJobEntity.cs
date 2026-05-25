@@ -9,8 +9,12 @@ public class TranscodeJobEntity
     public Guid Id { get; init; }
     public Guid MediaFileId { get; init; }
     public MediaFileEntity MediaFile { get; init; } = null!;
-    [MaxLength(256)] public required string NodeId { get; init; }
-    [MaxLength(4096)] public required string OutputPath { get; init; }
+
+    [MaxLength(256)]
+    public required string NodeId { get; init; }
+
+    [MaxLength(4096)]
+    public required string OutputPath { get; init; }
     public int ConstantRateFactor { get; init; }
     public AudioCodec AudioCodec { get; init; }
     public VideoCodec VideoCodec { get; init; }

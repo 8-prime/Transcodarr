@@ -16,8 +16,12 @@ public class JobQueueManagerService : BackgroundService
     private readonly WebSocketConnectionService _webSocketConnectionService;
     private readonly ILogger<JobQueueManagerService> _logger;
 
-    public JobQueueManagerService(IServiceScopeFactory serviceScopeFactory, ConnectionManager connections,
-        WebSocketConnectionService webSocketConnectionService, ILogger<JobQueueManagerService> logger)
+    public JobQueueManagerService(
+        IServiceScopeFactory serviceScopeFactory,
+        ConnectionManager connections,
+        WebSocketConnectionService webSocketConnectionService,
+        ILogger<JobQueueManagerService> logger
+    )
     {
         _serviceScopeFactory = serviceScopeFactory;
         _connections = connections;
@@ -31,10 +35,11 @@ public class JobQueueManagerService : BackgroundService
         {
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
 
-
             await using var scope = _serviceScopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-            var config = await dbContext.AppConfigurations.FirstOrDefaultAsync(cancellationToken: stoppingToken);
+            var config = await dbContext.AppConfigurations.FirstOrDefaultAsync(
+                cancellationToken: stoppingToken
+            );
             if (config == null)
             {
                 continue;
@@ -42,18 +47,26 @@ public class JobQueueManagerService : BackgroundService
 
             var freeSlots = _connections.GetTotalFreeSlots();
 
-            var timedOutJobs = await dbContext.TranscodeJobs.Where(j =>
-                    j.LeaseExpiresAt <= DateTime.UtcNow && j.Status == TranscodeJobStatus.Active)
-                .ExecuteUpdateAsync(setter =>
-                        setter.SetProperty(j => j.LeaseExpiresAt, (DateTimeOffset?)null)
+            var timedOutJobs = await dbContext
+                .TranscodeJobs.Where(j =>
+                    j.LeaseExpiresAt <= DateTime.UtcNow && j.Status == TranscodeJobStatus.Active
+                )
+                .ExecuteUpdateAsync(
+                    setter =>
+                        setter
+                            .SetProperty(j => j.LeaseExpiresAt, (DateTimeOffset?)null)
                             .SetProperty(j => j.Status, TranscodeJobStatus.TimedOut),
-                    stoppingToken);
+                    stoppingToken
+                );
             _logger.LogInformation("Found {TimeoutOutJobsCound} timed out jobs", timedOutJobs);
 
-            var pendingJobs = await dbContext.MediaFiles.AsNoTracking().Include(request => request.Jobs)
+            var pendingJobs = await dbContext
+                .MediaFiles.AsNoTracking()
+                .Include(request => request.Jobs)
                 .Where(request =>
-                    (request.Status == TranscodeStatus.Pending) &&
-                    request.Jobs.Count == 0 || request.Jobs.All(job => job.Status != TranscodeJobStatus.Active))
+                    (request.Status == TranscodeStatus.Pending) && request.Jobs.Count == 0
+                    || request.Jobs.All(job => job.Status != TranscodeJobStatus.Active)
+                )
                 .Take(freeSlots)
                 .ToListAsync(cancellationToken: stoppingToken);
 
@@ -71,7 +84,8 @@ public class JobQueueManagerService : BackgroundService
         TranscodarrDbContext dbContext,
         MediaFileEntity pendingFile,
         AppConfigurationEntity config,
-        CancellationToken stoppingToken)
+        CancellationToken stoppingToken
+    )
     {
         var conn = _connections.GetConnections().FirstOrDefault(c => c.FreeSlots > 0);
         if (conn is null)
@@ -80,9 +94,11 @@ public class JobQueueManagerService : BackgroundService
         }
 
         var fileInfo = new FileInfo(pendingFile.Path);
-        var outputPath = Path.Join(config.TranscodeTempDirectory,
+        var outputPath = Path.Join(
+            config.TranscodeTempDirectory,
             Path.GetFileName(fileInfo.FullName),
-            FileTypeConstants.TempFileSuffix);
+            FileTypeConstants.TempFileSuffix
+        );
 
         var newJob = new TranscodeJobEntity
         {
@@ -101,15 +117,18 @@ public class JobQueueManagerService : BackgroundService
 
         dbContext.TranscodeJobs.Add(newJob);
 
-
-        var request = new TranscodeRequest(pendingFile.Path, outputPath, newJob.Id,
+        var request = new TranscodeRequest(
+            pendingFile.Path,
+            outputPath,
+            newJob.Id,
             new TranscodeQualitySettings
             {
                 ConstantRateFactor = config.ConstantRateFactor,
                 DesiredAudioCodec = config.TranscodeAudioCodec,
                 DesiredVideoCodec = config.TranscodeVideoCodec,
                 DesiredEncoderPreset = config.TranscodeEncoderPreset,
-            })
+            }
+        )
         {
             CorrelationId = Guid.NewGuid(),
         };

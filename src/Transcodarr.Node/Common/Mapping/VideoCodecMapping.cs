@@ -11,7 +11,7 @@ public static class VideoCodecMapping
             Transcodearr.Shared.DTOs.VideoCodec.H264 => VideoCodec.LibX264,
             Transcodearr.Shared.DTOs.VideoCodec.H265 => VideoCodec.LibX265,
             Transcodearr.Shared.DTOs.VideoCodec.Av1 => VideoCodec.LibaomAv1,
-            _ => throw new ArgumentOutOfRangeException(nameof(codec), codec, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(codec), codec, null),
         };
     }
 }

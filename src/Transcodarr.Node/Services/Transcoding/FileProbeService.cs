@@ -5,7 +5,10 @@ namespace Transcodarr.Node.Services.Transcoding;
 
 public class FileProbeService
 {
-    public async Task<FileProbeResult?> ProbeFileAsync(string path, CancellationToken cancellationToken = default)
+    public async Task<FileProbeResult?> ProbeFileAsync(
+        string path,
+        CancellationToken cancellationToken = default
+    )
     {
         var mediaInfo = await FFProbe.AnalyseAsync(path, cancellationToken: cancellationToken);
         var mainVideoStream = mediaInfo.PrimaryVideoStream;
@@ -17,13 +20,16 @@ public class FileProbeService
 
         return new FileProbeResult
         {
-            AudioStreams = string.Join(',', mediaInfo.AudioStreams.Select(a => a.Language).OfType<string>()),
+            AudioStreams = string.Join(
+                ',',
+                mediaInfo.AudioStreams.Select(a => a.Language).OfType<string>()
+            ),
             VideoCodec = mainVideoStream.CodecName,
             Bitrate = mainVideoStream.BitRate,
             Duration = mainVideoStream.Duration,
             Height = mainVideoStream.Height,
             Width = mainVideoStream.Width,
-            IsHdr = false
+            IsHdr = false,
         };
     }
 }

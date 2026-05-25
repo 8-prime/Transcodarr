@@ -10,7 +10,10 @@ public class SlotTracker
     {
         foreach (var capability in capabilities)
         {
-            _semaphores.TryAdd(capability.EncoderName, new SemaphoreSlim(capability.Slots, capability.Slots));
+            _semaphores.TryAdd(
+                capability.EncoderName,
+                new SemaphoreSlim(capability.Slots, capability.Slots)
+            );
         }
     }
 
