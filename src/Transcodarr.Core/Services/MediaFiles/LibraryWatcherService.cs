@@ -1,10 +1,7 @@
-﻿using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
-using Transcodarr.Core.Common.Enums;
-using Transcodarr.Core.Common.Events;
+﻿using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Database;
 
-namespace Transcodarr.Core.Services;
+namespace Transcodarr.Core.Services.MediaFiles;
 
 public class LibraryWatcherService : BackgroundService
 {
@@ -23,34 +20,25 @@ public class LibraryWatcherService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await using (var scope = _scopeFactory.CreateAsyncScope())
+        while (!stoppingToken.IsCancellationRequested)
         {
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-            var libraries = await dbContext.Libraries.ToListAsync(stoppingToken);
+            var libraries = await dbContext.Libraries.ToDictionaryAsync(l => l.Id, l => l, stoppingToken);
+            var newLibraries = libraries.Where(l => !_fileSystemWatchers.ContainsKey(l.Key)).Select(l => l.Value);
+            var staleLibraries = _fileSystemWatchers.Where(w => !libraries.ContainsKey(w.Key)).Select(l => l.Key);
 
-            foreach (var library in libraries)
+            foreach (var newLibrary in newLibraries)
             {
-                SetupFileSystemWatcher(library.Id, library.FileSystemPath);
+                await SetupFileSystemWatcher(newLibrary.Id, newLibrary.FileSystemPath, stoppingToken);
             }
-        }
 
-        await foreach (var libraryChange in _libraryService.Reader.ReadAllAsync(stoppingToken))
-        {
-            switch (libraryChange)
+            foreach (var staleLibraryId in staleLibraries)
             {
-                case LibraryAdded added:
-                    SetupFileSystemWatcher(added.LibraryId, added.Path);
-                    break;
-                case LibraryUpdated updated:
-                    RemoveFileSystemWatcher(updated.LibraryId);
-                    SetupFileSystemWatcher(updated.LibraryId, updated.Path);
-                    break;
-                case LibraryRemoved removed:
-                    RemoveFileSystemWatcher(removed.LibraryId);
-                    break;
-                default:
-                    throw new UnreachableException();
+                RemoveFileSystemWatcher(staleLibraryId);
             }
+
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
 
@@ -65,7 +53,7 @@ public class LibraryWatcherService : BackgroundService
         _fileSystemWatchers.Remove(libraryId);
     }
 
-    private void SetupFileSystemWatcher(Guid libraryId, string fileSystemPath)
+    private async Task SetupFileSystemWatcher(Guid libraryId, string fileSystemPath, CancellationToken stoppingToken)
     {
         if (_fileSystemWatchers.ContainsKey(libraryId))
         {
@@ -78,6 +66,7 @@ public class LibraryWatcherService : BackgroundService
         fsWatcher.Deleted += OnFileDeleted;
         fsWatcher.Renamed += OnFileRenamed;
         fsWatcher.EnableRaisingEvents = true;
+        await _libraryService.ScanLibraryAsync(fileSystemPath, libraryId, stoppingToken);
 
         _fileSystemWatchers.Add(libraryId, fsWatcher);
     }
