@@ -9,7 +9,7 @@ public class MediaFileEntity
     public Guid LibraryId { get; init; }
     public LibraryEntity Library { get; init; } = null!;
     public TranscodeStatus Status { get; set; }
-    [MaxLength(4069)] public required string Path { get; init; }
+    [MaxLength(4069)] public required string Path { get; set; }
     public DateTimeOffset DiscoveredAt { get; init; }
     public DateTimeOffset FileModifiedAt { get; set; }
 

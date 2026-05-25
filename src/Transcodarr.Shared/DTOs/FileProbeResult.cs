@@ -2,6 +2,7 @@
 
 public class FileProbeResult
 {
+    public Guid MediaFileId { get; set; }
     public required string VideoCodec { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }

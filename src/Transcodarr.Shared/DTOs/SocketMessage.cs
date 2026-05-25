@@ -17,7 +17,7 @@ public abstract record SocketMessage
 
 public record Heartbeat : SocketMessage;
 
-public record ProbeRequest(string ProbeFilePath) : SocketMessage;
+public record ProbeRequest(string ProbeFilePath, Guid MediaFileId) : SocketMessage;
 
 public record ProbeResponse(FileProbeResult? Result) : SocketMessage;
 

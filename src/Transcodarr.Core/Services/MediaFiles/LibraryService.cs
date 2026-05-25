@@ -49,7 +49,7 @@ public class LibraryService
 
             mediaFile.Metadata = null;
             mediaFile.Status = TranscodeStatus.Discovered;
-            await _fileProbeService.ProbeFileAsync(file, stoppingToken);
+            await _fileProbeService.ProbeFileAsync(file, mediaFile.Id, stoppingToken);
         }
     }
 
@@ -68,6 +68,6 @@ public class LibraryService
         };
         _dbContext.MediaFiles.Add(newFileInfo);
 
-        await _fileProbeService.ProbeFileAsync(file, stoppingToken);
+        await _fileProbeService.ProbeFileAsync(file, newFileInfo.Id, stoppingToken);
     }
 }
