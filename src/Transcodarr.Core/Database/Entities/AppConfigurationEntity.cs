@@ -7,8 +7,9 @@ public class AppConfigurationEntity
 {
     public bool AutoApplyTranscode { get; set; }
     [MaxLength(4096)] public required string TranscodeTempDirectory { get; set; }
-    public AudioCodec TranscodeTempAudioCodec { get; set; }
+    public AudioCodec TranscodeAudioCodec { get; set; }
     public EncoderPreset TranscodeEncoderPreset { get; set; }
-    public VideoCodec TranscodeTempVideoCodec { get; set; }
-    public int ConstantRateFactor  { get; set; }
+    public VideoCodec TranscodeVideoCodec { get; set; }
+    public int ConstantRateFactor { get; set; }
+    public int JobExpirationInMinutes { get; set; }
 }

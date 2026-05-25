@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Endpoints;
 using Transcodarr.Core.Services;
+using MessageHandler = Transcodarr.Core.Services.Connection.MessageHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 

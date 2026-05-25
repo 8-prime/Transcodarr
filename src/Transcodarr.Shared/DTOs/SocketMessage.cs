@@ -23,8 +23,6 @@ public record ProbeResponse(FileProbeResult? Result) : SocketMessage;
 
 public record NodeInfoMessage(NodeInfo Info) : SocketMessage;
 
-public record TokenUpdateMessage() : SocketMessage;
-
 public record TranscodeRequest(
     string FilePath,
     string OutputPath,
@@ -37,7 +35,7 @@ public record TranscodeRejection(Guid JobLeaseId) : SocketMessage;
 public record IncrementSlotsMessage : SocketMessage;
 
 public record TranscodeResponse(
-    Guid JobLeaseId,
+    Guid TranscodeJobId,
     bool Success,
     TranscoderSnapshot EncoderSettingsSnapshot,
     long OutputSizeBytes,

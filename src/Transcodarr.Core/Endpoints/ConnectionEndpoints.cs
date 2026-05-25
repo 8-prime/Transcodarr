@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Services;
 using Transcodarr.Shared.DTOs;
+using MessageHandler = Transcodarr.Core.Services.Connection.MessageHandler;
 
 namespace Transcodarr.Core.Endpoints;
 

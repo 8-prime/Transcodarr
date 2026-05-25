@@ -1,25 +1,25 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Transcodarr.Core.Database.Enums;
+using Transcodearr.Shared.DTOs;
 
 namespace Transcodarr.Core.Database.Entities;
 
 public class TranscodeJobEntity
 {
-    public Guid Id { get; set; }
-    public Guid FileInfoId { get; set; }
-    public JobState State { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public Guid? LeaseToken { get; set; }
-    public DateTime? LeaseExpiresAt { get; set; }
-    public DateTime? CompletedAt { get; set; }
-    [MaxLength(4096)] public required string OutputPath { get; set; }
-    [MaxLength(100)] public string? NodeId { get; set; }
-    [MaxLength(256)] public string? ErrorMessage { get; set; }
-    public int AttemptNumber { get; set; }
+    public Guid Id { get; init; }
+    public Guid MediaFileId { get; init; }
+    public MediaFileEntity MediaFile { get; init; } = null!;
+    [MaxLength(256)] public required string NodeId { get; init; }
+    [MaxLength(4096)] public required string OutputPath { get; init; }
+    public int ConstantRateFactor { get; init; }
+    public AudioCodec AudioCodec { get; init; }
+    public VideoCodec VideoCodec { get; init; }
+    public EncoderPreset EncoderPreset { get; init; }
+    public TranscodeJobStatus Status { get; set; }
 
-    // Encode results
-    public long? OutputSizeBytes { get; set; }
-    public double? VmafScore { get; set; }
-    [MaxLength(256)] public string? EncoderSettingsSnapshot { get; set; }
-    public FileInfoEntity FileInfoEntity { get; set; } = null!;
+    public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset LeaseExpiresAt { get; init; }
+    public DateTimeOffset? CompletedAt { get; init; }
+
+    public TranscodeResultEntity? TranscodeResult { get; init; }
 }

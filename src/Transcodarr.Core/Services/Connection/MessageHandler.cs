@@ -5,7 +5,7 @@ using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
 using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Core.Services;
+namespace Transcodarr.Core.Services.Connection;
 
 public partial class MessageHandler
 {
@@ -31,6 +31,9 @@ public partial class MessageHandler
                 break;
             case Heartbeat _:
                 await HandleHeartbeat(nodeConnectionInfo, cancellationToken);
+                break;
+            case IncrementSlotsMessage _:
+                nodeConnectionInfo.FreeSlots++;
                 break;
             default:
                 break;
@@ -65,11 +68,12 @@ public partial class MessageHandler
             return;
         }
 
-        var jobLease = context.TranscodeJobs.Include(j => j.).FirstOrDefault(j => j.Id == transcodeResponse.JobLeaseId);
-        if (fileInfo == null || jobLease == null)
+        var jobLease = context.TranscodeJobs.Include(r => r.MediaFile)
+            .FirstOrDefault(j => j.Id == transcodeResponse.TranscodeJobId);
+        if (jobLease == null)
         {
             throw new ApplicationException(
-                $"File {transcodeResponse.FileInfoId} or lease {transcodeResponse.JobLeaseId} not found");
+                $"Lease {transcodeResponse.TranscodeJobId} not found");
         }
 
         if (settings.AutoApplyTranscode)
@@ -80,20 +84,32 @@ public partial class MessageHandler
                 return;
             }
 
-            File.Move(jobLease.OutputPath, fileInfo.Path, true);
-            fileInfo.ProcessingState = ProcessingState.Succeeded;
-            fileInfo.LastModified = DateTimeOffset.UtcNow;
-            context.TranscodeJobs.Remove(jobLease);
-            context.ProcessingResults.Add(new ProcessingResultEntity
+            File.Move(jobLease.OutputPath, jobLease
+                .MediaFile.Path, true);
+            var fileInfo = new FileInfo(jobLease.MediaFile.Path);
+            jobLease.Status = TranscodeJobStatus.Completed;
+            jobLease.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc;
+
+
+            context.TranscodeResults.Add(new TranscodeResultEntity()
             {
-                EncoderSettingsSnapshot = transcodeResponse.EncoderSettingsSnapshot,
-                OutputSizeBytes = transcodeResponse.OutputSizeBytes,
-                VmafScore = transcodeResponse.VMafScore,
+                ApprovalState = ApprovalState.AutoApproved,
+                CompletedAt = DateTimeOffset.UtcNow,
+                FileSizeBytes = transcodeResponse.OutputSizeBytes,
+                TranscodeJob = jobLease,
+                VmafScore = 0
             });
         }
         else
         {
-            fileInfo.ProcessingState = ProcessingState.Validating;
+            context.TranscodeResults.Add(new TranscodeResultEntity()
+            {
+                ApprovalState = ApprovalState.Pending,
+                CompletedAt = DateTimeOffset.UtcNow,
+                FileSizeBytes = transcodeResponse.OutputSizeBytes,
+                TranscodeJob = jobLease,
+                VmafScore = 0
+            });
         }
 
         await context.SaveChangesAsync(cancellationToken);

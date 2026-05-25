@@ -1,6 +1,6 @@
 ﻿using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Core.Services;
+namespace Transcodarr.Core.Services.MediaFiles;
 
 public class FileProbeService
 {
@@ -13,19 +13,16 @@ public class FileProbeService
         _connectionManager = connectionManager;
     }
 
-    public async Task<FileProbeResult?> ProbeFileAsync(string path, CancellationToken cancellationToken = default)
+    public async Task ProbeFileAsync(string path, CancellationToken cancellationToken = default)
     {
-        var conn = _connectionManager.GetConnections().FirstOrDefault();
-        if (conn is null)
-        {
-            return null;
-        }
+        var conns = _connectionManager.GetConnections();
+        if (conns.Count == 0) return;
+        var conn = conns.ElementAt(Random.Shared.Next(conns.Count - 1));
 
         var probeRequest = new ProbeRequest(path)
         {
             CorrelationId = Guid.NewGuid()
         };
-        var result = await _webSocketConnectionService.SendAsync(probeRequest, conn, cancellationToken);
-        return result is not ProbeResponse response ? null : response.Result;
+        await _webSocketConnectionService.SendFireAndForgetAsync(probeRequest, conn, cancellationToken);
     }
 }

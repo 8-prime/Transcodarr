@@ -1,15 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Transcodarr.Core.Database.Enums;
 
 namespace Transcodarr.Core.Database.Entities;
 
-public class FileInfoEntity
+public class MediaFileMetadataEntity
 {
     public Guid Id { get; init; }
-    public Guid LibraryId { get; init; }
-    [MaxLength(4096)] public required string Path { get; init; }
-    public DateTimeOffset LastModified { get; set; }
-    // populated after successful probe job
+    public Guid MediaFileId { get; init; }
+    public MediaFileEntity MediaFileEntity { get; init; } = null!;
+
     [MaxLength(100)] public required string VideoCodec { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }

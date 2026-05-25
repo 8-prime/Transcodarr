@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Common.Constants;
-using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
+using Transcodarr.Core.Services.MediaFiles;
 
 namespace Transcodarr.Core.Services;
 
@@ -22,15 +22,9 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
 
         var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
         var transcodeEligibilityService = scope.ServiceProvider.GetRequiredService<TranscodeEligibilityService>();
-        Dictionary<string, LibraryScanInfo> knownFiles =
-            await dbContext.FileInfos.AsNoTracking().Select(f => new LibraryScanInfo
-            {
-                LibraryPath = f.Path,
-                FileInfoId = f.Id,
-                LibraryId = f.LibraryId,
-                FileSize = f.FileSizeBytes,
-                LastModified = f.LastModified,
-            }).ToDictionaryAsync(f => f.LibraryPath, stoppingToken);
+        var knownFiles =
+            await dbContext.MediaFiles.AsNoTracking().Include(f => f.Library)
+                .ToDictionaryAsync(f => f.Library.FileSystemPath, stoppingToken);
         var libraries = await dbContext.Libraries.AsNoTracking().ToListAsync(stoppingToken);
         foreach (var library in libraries)
         {
@@ -39,13 +33,12 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
         }
 
         var deletedPaths = knownFiles.Keys.ToList();
-        await dbContext.FileInfos.Where(f => deletedPaths.Contains(f.Path)).ExecuteDeleteAsync(stoppingToken);
+        await dbContext.MediaFiles.Where(f => deletedPaths.Contains(f.Path)).ExecuteDeleteAsync(stoppingToken);
     }
 
-    private async Task ScanLibraryAsync(Dictionary<string, LibraryScanInfo> knownFiles, string libraryPath,
+    private async Task ScanLibraryAsync(Dictionary<string, MediaFileEntity> knownFiles, string libraryPath,
+        Guid libraryId,
         TranscodarrDbContext dbContext,
-        FileProbeService fileProbeService,
-        TranscodeEligibilityService transcodeEligibilityService,
         AppConfigurationEntity configurationEntity,
         CancellationToken stoppingToken)
     {
@@ -61,59 +54,40 @@ public class LibraryStartupScannerService(IServiceScopeFactory serviceScopeFacto
                 continue;
             }
 
-            if (fi.Length == libraryScanInfo.FileSize &&
-                fi.LastWriteTimeUtc == libraryScanInfo.LastModified.UtcDateTime)
+            if (fi.LastWriteTimeUtc == libraryScanInfo.FileModifiedAt)
             {
                 continue;
             }
 
-            dbContext.TranscodeJobs.Add(new TranscodeJobEntity
+            var mediaFile =
+                await dbContext.MediaFiles.FirstOrDefaultAsync(f => f.Path == file, stoppingToken);
+            if (mediaFile is null)
             {
-                FileInfoId = libraryScanInfo.FileInfoId,
-                State = JobState.Pending,
-                OutputPath = Path.Join(configurationEntity.TranscodeTempDirectory, Path.GetFileName(fi.FullName),
-                    FileTypeConstants.TempFileSuffix),
-            });
+                continue;
+            }
 
-            var stub = new FileInfoEntity
-                { Id = libraryScanInfo.FileInfoId, Path = null!, VideoCodec = null!, AudioStreams = null! };
-            dbContext.FileInfos.Attach(stub);
-            dbContext.Entry(stub).Property(f => f.ProcessingState).IsModified = true;
-            stub.ProcessingState = ProcessingState.Queued;
+            mediaFile.Metadata = null;
+            mediaFile.Status = TranscodeStatus.Discovered;
         }
 
         await dbContext.SaveChangesAsync(stoppingToken);
     }
 
-    private static async Task AddNewFile(TranscodarrDbContext dbContext, FileProbeService fileProbeService,
+    private async Task AddNewFile(TranscodarrDbContext dbContext, FileProbeService fileProbeService,
         TranscodeEligibilityService transcodeEligibilityService, string file, FileInfo fi,
         AppConfigurationEntity configurationEntity,
         CancellationToken stoppingToken)
     {
-        var probeResult = await fileProbeService.ProbeFileAsync(file, stoppingToken);
-
-        if (probeResult is null)
-        {
-            //TODO: Add to dlq
-            return;
-        }
-
-        var newFileInfo = new FileInfoEntity
+        var newFileInfo = new MediaFileEntity
         {
             Id = Guid.NewGuid(),
             Path = file,
-            ProcessingState = ProcessingState.Discovered,
-            LastModified = fi.LastWriteTimeUtc,
-            AudioStreams = probeResult.AudioStreams,
-            VideoCodec = probeResult.VideoCodec,
-            BitRate = probeResult.Bitrate,
-            Duration = probeResult.Duration,
-            FileSizeBytes = fi.Length,
-            Height = probeResult.Height,
-            Width = probeResult.Width,
-            IsHdr = probeResult.IsHdr,
+            Status = TranscodeStatus.Discovered,
+            FileModifiedAt = fi.LastWriteTimeUtc,
+            DiscoveredAt = DateTimeOffset.UtcNow,
+            LibraryId = 
         };
-        dbContext.FileInfos.Add(newFileInfo);
+        dbContext.MediaFiles.Add(newFileInfo);
 
         if (!transcodeEligibilityService.IsEligibleForTranscode(probeResult))
         {
