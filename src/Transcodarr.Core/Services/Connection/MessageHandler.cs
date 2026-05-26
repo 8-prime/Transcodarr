@@ -171,6 +171,7 @@ public partial class MessageHandler
         }
         else
         {
+            job.Status = TranscodeJobStatus.Completed;
             context.TranscodeResults.Add(
                 new TranscodeResultEntity()
                 {

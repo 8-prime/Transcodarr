@@ -60,9 +60,12 @@ public class JobQueueManagerService : BackgroundService
                 .MediaFiles.AsNoTracking()
                 .Include(file => file.Jobs)
                 .Include(file => file.Metadata)
-                .Where(request =>
-                    (request.Status == TranscodeStatus.Pending && request.Jobs.Count == 0)
-                    || request.Jobs.All(job => job.Status != TranscodeJobStatus.Active)
+                .Where(file =>
+                    file.Status == TranscodeStatus.Pending
+                    && (
+                        file.Jobs.Count == 0
+                        || file.Jobs.All(job => job.Status != TranscodeJobStatus.Active)
+                    )
                 )
                 .Take(freeSlots)
                 .ToListAsync(cancellationToken: stoppingToken);
