@@ -1,4 +1,4 @@
-﻿using Transcodearr.Shared;
+﻿using Transcodarr.Shared;
 
 namespace Transcodarr.Node.Services.NodeState;
 

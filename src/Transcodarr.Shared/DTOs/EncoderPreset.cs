@@ -1,4 +1,4 @@
-﻿namespace Transcodearr.Shared.DTOs;
+﻿namespace Transcodarr.Shared.DTOs;
 
 public enum EncoderPreset
 {

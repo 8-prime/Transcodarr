@@ -1,4 +1,4 @@
-﻿namespace Transcodearr.Shared;
+﻿namespace Transcodarr.Shared;
 
 public class TranscodeJob
 {

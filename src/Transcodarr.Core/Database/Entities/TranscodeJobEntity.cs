@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Transcodarr.Core.Database.Enums;
-using Transcodearr.Shared.DTOs;
+using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Database.Entities;
 

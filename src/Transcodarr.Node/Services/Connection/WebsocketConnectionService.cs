@@ -5,7 +5,7 @@ using Transcodarr.Node.Common.Models;
 using Transcodarr.Node.Services.NodeState;
 using Transcodarr.Node.Services.Transcoding;
 using Transcodarr.Shared.DTOs;
-using Transcodearr.Shared;
+using Transcodarr.Shared;
 
 namespace Transcodarr.Node.Services.Connection;
 

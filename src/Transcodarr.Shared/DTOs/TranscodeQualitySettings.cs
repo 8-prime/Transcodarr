@@ -1,6 +1,6 @@
 ﻿using System.Text.Encodings.Web;
 
-namespace Transcodearr.Shared.DTOs;
+namespace Transcodarr.Shared.DTOs;
 
 public class TranscodeQualitySettings
 {

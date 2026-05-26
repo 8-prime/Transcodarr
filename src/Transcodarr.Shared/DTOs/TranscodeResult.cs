@@ -1,3 +1,3 @@
-﻿namespace Transcodearr.Shared.DTOs;
+﻿namespace Transcodarr.Shared.DTOs;
 
 public class TranscodeResult { }

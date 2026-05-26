@@ -1,7 +1,6 @@
 ﻿using FFMpegCore;
 using Transcodarr.Node.Common.Mapping;
 using Transcodarr.Shared.DTOs;
-using Transcodearr.Shared.DTOs;
 
 namespace Transcodarr.Node.Services.Transcoding;
 

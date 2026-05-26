@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using Transcodearr.Shared;
-using Transcodearr.Shared.DTOs;
+using Transcodarr.Shared;
+using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Shared.DTOs;
 

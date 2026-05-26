@@ -5,7 +5,7 @@ using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
 using Transcodarr.Shared.DTOs;
-using Transcodearr.Shared.DTOs;
+using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services.Jobs;
 

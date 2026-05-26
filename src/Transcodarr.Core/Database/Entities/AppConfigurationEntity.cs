@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Transcodearr.Shared.DTOs;
+using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Database.Entities;
 

@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Transcodearr.Shared</RootNamespace>
+    <RootNamespace>Transcodarr.Shared</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

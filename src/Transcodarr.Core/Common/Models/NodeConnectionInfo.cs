@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Transcodarr.Shared.DTOs;
-using Transcodearr.Shared;
+using Transcodarr.Shared;
 
 namespace Transcodarr.Core.Common.Models;
 
