@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Transcodarr.Core.Database;
 using Transcodarr.Core.Endpoints;
 using Transcodarr.Core.Services;
 using Transcodarr.Core.Services.Configuration;
@@ -6,6 +8,9 @@ using Transcodarr.Core.Services.Jobs;
 using Transcodarr.Core.Services.MediaFiles;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<TranscodarrDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("TranscodarrDb")));
 
 builder.Services.AddSingleton<ConfigurationService>();
 
@@ -24,6 +29,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
+    await dbContext.Database.MigrateAsync();
+    
     var configuration = scope.ServiceProvider.GetRequiredService<ConfigurationService>();
     try
     {
