@@ -45,9 +45,37 @@ public partial class MessageHandler
             case TranscodeProgress progress:
                 await HandleProgress(progress, cancellationToken);
                 break;
+            case ProbeResponse response:
+                await HandleProbeResponse(response.Result, cancellationToken);
+                break;
             default:
                 break;
         }
+    }
+
+    private async Task HandleProbeResponse(FileProbeResult fileProbeResult, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
+        var file = await context.MediaFiles.FirstOrDefaultAsync(f => f.Id == fileProbeResult.MediaFileId,
+            cancellationToken);
+
+        file?.Metadata = new MediaFileMetadataEntity
+        {
+            Id = Guid.NewGuid(),
+            AudioStreams = fileProbeResult.AudioStreams,
+            VideoCodec = fileProbeResult.VideoCodec,
+            Duration = fileProbeResult.Duration,
+            BitRate = fileProbeResult.Bitrate,
+            FileSizeBytes = new FileInfo(file.Path).Length,
+            Height = fileProbeResult.Height,
+            Width = fileProbeResult.Width,
+            IsHdr = fileProbeResult.IsHdr,
+        };
+
+        file?.Status = TranscodeStatus.Pending;
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private async Task HandleProgress(
