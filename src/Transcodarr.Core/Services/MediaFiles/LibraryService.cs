@@ -26,7 +26,7 @@ public class LibraryService
         var knownFiles = await _dbContext
             .MediaFiles.AsNoTracking()
             .Include(f => f.Library)
-            .ToDictionaryAsync(f => f.Library.FileSystemPath, stoppingToken);
+            .ToDictionaryAsync(f => f.Path, stoppingToken);
 
         foreach (
             var file in Directory

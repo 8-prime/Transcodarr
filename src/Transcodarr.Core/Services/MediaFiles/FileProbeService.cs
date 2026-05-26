@@ -25,7 +25,7 @@ public class FileProbeService
         var conns = _connectionManager.GetConnections();
         if (conns.Count == 0)
             return;
-        var conn = conns.ElementAt(Random.Shared.Next(conns.Count - 1));
+        var conn = conns.ElementAt(Random.Shared.Next(conns.Count));
 
         var probeRequest = new ProbeRequest(path, mediaFileId) { CorrelationId = Guid.NewGuid() };
         await _webSocketConnectionService.SendFireAndForgetAsync(

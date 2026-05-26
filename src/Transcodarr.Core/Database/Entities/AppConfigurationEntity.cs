@@ -5,6 +5,7 @@ namespace Transcodarr.Core.Database.Entities;
 
 public class AppConfigurationEntity
 {
+    public Guid Id { get; set; }
     public bool AutoApplyTranscode { get; set; }
 
     [MaxLength(4096)]

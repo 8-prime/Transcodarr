@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Transcodarr.Core.Database;
 using Transcodarr.Core.Endpoints;
 using Transcodarr.Core.Services;
 using Transcodarr.Core.Services.Configuration;
@@ -8,15 +6,6 @@ using Transcodarr.Core.Services.MediaFiles;
 using MessageHandler = Transcodarr.Core.Services.Connection.MessageHandler;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// builder.Services.AddDbContext<TranscodarrDbContext>(options =>
-//     options.UseSqlite(builder.Configuration.GetConnectionString("TranscodarrDbContext")));
-//
-// builder.Services.AddHostedService<LibraryStartupScannerService>();
-// builder.Services.AddHostedService<LibraryWatcherService>();
-// builder.Services.AddHostedService<JobQueueManagerService>();
-// builder.Services.AddScoped<FileProbeService>();
-// builder.Services.AddScoped<TranscodeEligibilityService>();
 
 builder.Services.AddSingleton<ConfigurationService>();
 

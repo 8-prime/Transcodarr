@@ -22,7 +22,7 @@ public class TranscodeJobEntity
     public TranscodeJobStatus Status { get; set; }
 
     public DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset LeaseExpiresAt { get; init; }
+    public DateTimeOffset LeaseExpiresAt { get; set; }
     public DateTimeOffset? CompletedAt { get; init; }
 
     public TranscodeResultEntity? TranscodeResult { get; init; }
