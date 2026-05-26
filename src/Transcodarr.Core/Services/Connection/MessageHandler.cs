@@ -3,6 +3,7 @@ using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
+using Transcodarr.Core.Services.Configuration;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services.Connection;
@@ -10,12 +11,15 @@ namespace Transcodarr.Core.Services.Connection;
 public partial class MessageHandler
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ConfigurationService _configurationService;
     private readonly ILogger<MessageHandler> _logger;
 
-    public MessageHandler(IServiceScopeFactory serviceScopeFactory, ILogger<MessageHandler> logger)
+    public MessageHandler(IServiceScopeFactory serviceScopeFactory, ILogger<MessageHandler> logger,
+        ConfigurationService configurationService)
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
+        _configurationService = configurationService;
     }
 
     public async Task ProcessMessageAsync(
@@ -88,13 +92,6 @@ public partial class MessageHandler
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-        var settings = await context
-            .AppConfigurations.AsNoTracking()
-            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
-        if (settings == null)
-        {
-            throw new ApplicationException($"No settings found for {nameof(TranscodeResponse)}");
-        }
 
         if (!transcodeResponse.Success)
         {
@@ -110,7 +107,7 @@ public partial class MessageHandler
             throw new ApplicationException($"Lease {transcodeResponse.TranscodeJobId} not found");
         }
 
-        if (settings.AutoApplyTranscode)
+        if (_configurationService.Current.AutoApplyTranscode)
         {
             if (!File.Exists(jobLease.OutputPath))
             {

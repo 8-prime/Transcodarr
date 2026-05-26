@@ -1,10 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Common.Constants;
-using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
-using Transcodarr.Shared.DTOs;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services.Jobs;
@@ -49,7 +47,7 @@ public class JobQueueManagerService : BackgroundService
 
             var timedOutJobs = await dbContext
                 .TranscodeJobs.Where(j =>
-                    j.LeaseExpiresAt <= DateTime.UtcNow && j.Status == TranscodeJobStatus.Active
+                    j.LeaseExpiresAt <= DateTimeOffset.UtcNow && j.Status == TranscodeJobStatus.Active
                 )
                 .ExecuteUpdateAsync(
                     setter =>
