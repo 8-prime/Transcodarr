@@ -47,13 +47,11 @@ public class JobQueueManagerService : BackgroundService
 
             var timedOutJobs = await dbContext
                 .TranscodeJobs.Where(j =>
-                    j.LeaseExpiresAt <= DateTimeOffset.UtcNow && j.Status == TranscodeJobStatus.Active
+                    j.LeaseExpiresAt <= DateTimeOffset.UtcNow
+                    && j.Status == TranscodeJobStatus.Active
                 )
                 .ExecuteUpdateAsync(
-                    setter =>
-                        setter
-                            .SetProperty(j => j.LeaseExpiresAt, (DateTimeOffset?)null)
-                            .SetProperty(j => j.Status, TranscodeJobStatus.TimedOut),
+                    setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.TimedOut),
                     stoppingToken
                 );
             _logger.LogInformation("Found {TimeoutOutJobsCound} timed out jobs", timedOutJobs);
@@ -100,8 +98,7 @@ public class JobQueueManagerService : BackgroundService
         var fileInfo = new FileInfo(pendingFile.Path);
         var outputPath = Path.Join(
             config.TranscodeTempDirectory,
-            Path.GetFileName(fileInfo.FullName),
-            FileTypeConstants.TempFileSuffix
+            Path.GetFileNameWithoutExtension(fileInfo.FullName) + FileTypeConstants.TempFileSuffix
         );
 
         var newJob = new TranscodeJobEntity

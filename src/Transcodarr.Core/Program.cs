@@ -10,7 +10,8 @@ using Transcodarr.Core.Services.MediaFiles;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<TranscodarrDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("TranscodarrDb")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("TranscodarrDb"))
+);
 
 builder.Services.AddSingleton<ConfigurationService>();
 
@@ -31,15 +32,13 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
     await dbContext.Database.MigrateAsync();
-    
+
     var configuration = scope.ServiceProvider.GetRequiredService<ConfigurationService>();
     try
     {
         await configuration.InitializeAsync(CancellationToken.None);
     }
-    catch
-    {
-    }
+    catch { }
 }
 
 app.UseWebSockets();

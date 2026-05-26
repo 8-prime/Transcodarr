@@ -14,8 +14,11 @@ public partial class MessageHandler
     private readonly ConfigurationService _configurationService;
     private readonly ILogger<MessageHandler> _logger;
 
-    public MessageHandler(IServiceScopeFactory serviceScopeFactory, ILogger<MessageHandler> logger,
-        ConfigurationService configurationService)
+    public MessageHandler(
+        IServiceScopeFactory serviceScopeFactory,
+        ILogger<MessageHandler> logger,
+        ConfigurationService configurationService
+    )
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
@@ -53,12 +56,17 @@ public partial class MessageHandler
         }
     }
 
-    private async Task HandleProbeResponse(FileProbeResult fileProbeResult, CancellationToken cancellationToken)
+    private async Task HandleProbeResponse(
+        FileProbeResult fileProbeResult,
+        CancellationToken cancellationToken
+    )
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-        var file = await context.MediaFiles.FirstOrDefaultAsync(f => f.Id == fileProbeResult.MediaFileId,
-            cancellationToken);
+        var file = await context.MediaFiles.FirstOrDefaultAsync(
+            f => f.Id == fileProbeResult.MediaFileId,
+            cancellationToken
+        );
 
         file?.Metadata = new MediaFileMetadataEntity
         {
@@ -121,32 +129,34 @@ public partial class MessageHandler
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
 
-        if (!transcodeResponse.Success)
+        var job = context
+            .TranscodeJobs.Include(r => r.MediaFile)
+            .FirstOrDefault(j => j.Id == transcodeResponse.TranscodeJobId);
+        if (job == null)
         {
-            //check attempt and requeue
             return;
         }
 
-        var jobLease = context
-            .TranscodeJobs.Include(r => r.MediaFile)
-            .FirstOrDefault(j => j.Id == transcodeResponse.TranscodeJobId);
-        if (jobLease == null)
+        if (!transcodeResponse.Success)
         {
-            throw new ApplicationException($"Lease {transcodeResponse.TranscodeJobId} not found");
+            //check attempt and requeue
+            job.Status = TranscodeJobStatus.Failed;
+            await context.SaveChangesAsync(cancellationToken);
+            return;
         }
 
         if (_configurationService.Current.AutoApplyTranscode)
         {
-            if (!File.Exists(jobLease.OutputPath))
+            if (!File.Exists(job.OutputPath))
             {
                 //check attempt and requeue
                 return;
             }
 
-            File.Move(jobLease.OutputPath, jobLease.MediaFile.Path, true);
-            var fileInfo = new FileInfo(jobLease.MediaFile.Path);
-            jobLease.Status = TranscodeJobStatus.Completed;
-            jobLease.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc;
+            File.Move(job.OutputPath, job.MediaFile.Path, true);
+            var fileInfo = new FileInfo(job.MediaFile.Path);
+            job.Status = TranscodeJobStatus.Completed;
+            job.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc;
 
             context.TranscodeResults.Add(
                 new TranscodeResultEntity()
@@ -154,7 +164,7 @@ public partial class MessageHandler
                     ApprovalState = ApprovalState.AutoApproved,
                     CompletedAt = DateTimeOffset.UtcNow,
                     FileSizeBytes = transcodeResponse.OutputSizeBytes,
-                    TranscodeJob = jobLease,
+                    TranscodeJob = job,
                     VmafScore = 0,
                 }
             );
@@ -167,7 +177,7 @@ public partial class MessageHandler
                     ApprovalState = ApprovalState.Pending,
                     CompletedAt = DateTimeOffset.UtcNow,
                     FileSizeBytes = transcodeResponse.OutputSizeBytes,
-                    TranscodeJob = jobLease,
+                    TranscodeJob = job,
                     VmafScore = 0,
                 }
             );

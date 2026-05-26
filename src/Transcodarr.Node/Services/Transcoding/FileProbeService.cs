@@ -29,7 +29,9 @@ public class FileProbeService
             Duration = mainVideoStream.Duration,
             Height = mainVideoStream.Height,
             Width = mainVideoStream.Width,
-            IsHdr = false,
+            IsHdr =
+                mainVideoStream.PixelFormat.Contains("10le")
+                || mainVideoStream.PixelFormat.Contains("10be"),
         };
     }
 }
