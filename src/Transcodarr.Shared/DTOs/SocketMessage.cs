@@ -10,6 +10,10 @@ namespace Transcodarr.Shared.DTOs;
 [JsonDerivedType(typeof(NodeInfoMessage), nameof(NodeInfoMessage))]
 [JsonDerivedType(typeof(Heartbeat), nameof(Heartbeat))]
 [JsonDerivedType(typeof(TranscodeProgress), nameof(TranscodeProgress))]
+[JsonDerivedType(typeof(TranscodeRequest), nameof(TranscodeRequest))]
+[JsonDerivedType(typeof(TranscodeResponse), nameof(TranscodeResponse))]
+[JsonDerivedType(typeof(TranscodeRejection), nameof(TranscodeRejection))]
+[JsonDerivedType(typeof(IncrementSlotsMessage), nameof(IncrementSlotsMessage))]
 public abstract record SocketMessage
 {
     public required Guid CorrelationId { get; init; }
