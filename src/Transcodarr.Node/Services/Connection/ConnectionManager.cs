@@ -48,8 +48,14 @@ public class ConnectionManager
             return;
         }
 
+        await SendAsync(message, _webSocket, stoppingToken);
+    }
+
+    public async Task SendAsync<T>(T message, WebSocket ws, CancellationToken stoppingToken)
+        where T : SocketMessage
+    {
         Memory<byte> payLoad = JsonSerializer.SerializeToUtf8Bytes<SocketMessage>(message);
-        await _webSocket.SendAsync(
+        await ws.SendAsync(
             payLoad,
             WebSocketMessageType.Text,
             WebSocketMessageFlags.EndOfMessage,

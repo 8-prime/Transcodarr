@@ -27,6 +27,7 @@ public record TranscodeRequest(
     string FilePath,
     string OutputPath,
     Guid JobLeaseId,
+    TimeSpan TotalDuration,
     TranscodeQualitySettings QualitySettings
 ) : SocketMessage;
 
@@ -42,4 +43,4 @@ public record TranscodeResponse(
     double VMafScore
 ) : SocketMessage;
 
-public record TranscodeProgress(double ProgressPercent) : SocketMessage;
+public record TranscodeProgress(double ProgressPercent, Guid TranscodeJobId) : SocketMessage;

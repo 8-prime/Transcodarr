@@ -38,9 +38,31 @@ public partial class MessageHandler
             case IncrementSlotsMessage _:
                 nodeConnectionInfo.FreeSlots++;
                 break;
+            case TranscodeProgress progress:
+                await HandleProgress(progress, cancellationToken);
+                break;
             default:
                 break;
         }
+    }
+
+    private async Task HandleProgress(
+        TranscodeProgress progress,
+        CancellationToken cancellationToken
+    )
+    {
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
+
+        await context
+            .TranscodeJobs.Where(j => j.Id == progress.TranscodeJobId)
+            .ExecuteUpdateAsync(
+                properties =>
+                    properties
+                        .SetProperty(j => j.LeaseExpiresAt, DateTimeOffset.UtcNow.AddMinutes(30))
+                        .SetProperty(j => j.Progress, progress.ProgressPercent),
+                cancellationToken: cancellationToken
+            );
     }
 
     private async Task HandleHeartbeat(

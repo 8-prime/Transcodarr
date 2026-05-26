@@ -62,7 +62,8 @@ public class JobQueueManagerService : BackgroundService
 
             var pendingJobs = await dbContext
                 .MediaFiles.AsNoTracking()
-                .Include(request => request.Jobs)
+                .Include(file => file.Jobs)
+                .Include(file => file.Metadata)
                 .Where(request =>
                     (request.Status == TranscodeStatus.Pending) && request.Jobs.Count == 0
                     || request.Jobs.All(job => job.Status != TranscodeJobStatus.Active)
@@ -89,6 +90,11 @@ public class JobQueueManagerService : BackgroundService
     {
         var conn = _connections.GetConnections().FirstOrDefault(c => c.FreeSlots > 0);
         if (conn is null)
+        {
+            return;
+        }
+
+        if (pendingFile.Metadata is null)
         {
             return;
         }
@@ -121,6 +127,7 @@ public class JobQueueManagerService : BackgroundService
             pendingFile.Path,
             outputPath,
             newJob.Id,
+            pendingFile.Metadata.Duration,
             new TranscodeQualitySettings
             {
                 ConstantRateFactor = config.ConstantRateFactor,

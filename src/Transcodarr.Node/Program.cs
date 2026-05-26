@@ -12,6 +12,7 @@ builder.Services.Configure<NodeConfiguration>(
 //Connection
 builder.Services.AddSingleton<ConnectionManager>();
 builder.Services.AddHostedService<WebsocketConnectionService>();
+builder.Services.AddSingleton<MessagesQueue>();
 
 //Node state
 builder.Services.AddSingleton<CapabilitiesService>();

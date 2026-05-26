@@ -89,15 +89,10 @@ public static class ConnectionEndpoints
                 cancellationToken: cancellationToken
             );
             if (message is null)
+            {
                 continue;
-            if (info.PendingRequests.TryGetValue(message.CorrelationId, out var tcs))
-            {
-                tcs.SetResult(message);
             }
-            else
-            {
-                await messageHandler.ProcessMessageAsync(message, info, cancellationToken);
-            }
+            await messageHandler.ProcessMessageAsync(message, info, cancellationToken);
         }
     }
 }

@@ -1,15 +1,24 @@
 ﻿using FFMpegCore;
 using Transcodarr.Node.Common.Mapping;
+using Transcodarr.Node.Services.Connection;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Node.Services.Transcoding;
 
 public class TranscodeService
 {
+    private readonly MessagesQueue _messagesQueue;
+
+    public TranscodeService(MessagesQueue messagesQueue)
+    {
+        _messagesQueue = messagesQueue;
+    }
+
     public async Task<TranscodeResponse> RunTranscodeAsync(
         Guid jobLeaseId,
         string filePath,
         string outputPath,
+        TimeSpan duration,
         TranscodeQualitySettings transcodeQualitySettings,
         string encoderName,
         CancellationToken stoppingToken
@@ -27,8 +36,13 @@ public class TranscodeService
                         .WithAudioCodec(transcodeQualitySettings.DesiredAudioCodec.Map())
                         .WithFastStart()
             )
-            .NotifyOnProgress((p) => { })
-            //TODO: use notify progress and send update to core.NotifyOnProgress()
+            .NotifyOnProgress(
+                p =>
+                    _messagesQueue.Enqueue(
+                        new TranscodeProgress(p, jobLeaseId) { CorrelationId = Guid.NewGuid() }
+                    ),
+                duration
+            )
             .ProcessAsynchronously();
 
         var fi = new FileInfo(outputPath);

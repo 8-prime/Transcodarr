@@ -4,8 +4,8 @@ using Microsoft.Extensions.Options;
 using Transcodarr.Node.Common.Models;
 using Transcodarr.Node.Services.NodeState;
 using Transcodarr.Node.Services.Transcoding;
-using Transcodarr.Shared.DTOs;
 using Transcodarr.Shared;
+using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Node.Services.Connection;
 
@@ -16,6 +16,7 @@ public class WebsocketConnectionService : BackgroundService
     private readonly SlotTracker _slotTracker;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly NodeConfiguration _configuration;
+    private readonly MessagesQueue _messagesQueue;
     private readonly ILogger<WebsocketConnectionService> _logger;
 
     public WebsocketConnectionService(
@@ -24,7 +25,8 @@ public class WebsocketConnectionService : BackgroundService
         IOptions<NodeConfiguration> configuration,
         ILogger<WebsocketConnectionService> logger,
         SlotTracker slotTracker,
-        NodeInfoManager nodeInfoManager
+        NodeInfoManager nodeInfoManager,
+        MessagesQueue messagesQueue
     )
     {
         _connectionManager = connectionManager;
@@ -32,6 +34,7 @@ public class WebsocketConnectionService : BackgroundService
         _logger = logger;
         _slotTracker = slotTracker;
         _nodeInfoManager = nodeInfoManager;
+        _messagesQueue = messagesQueue;
         _configuration = configuration.Value;
     }
 
@@ -81,6 +84,7 @@ public class WebsocketConnectionService : BackgroundService
         {
             await Task.WhenAny(
                 ProcessMessagesAsync(ws, linked.Token),
+                SendMessagesAsync(ws, linked.Token),
                 SendHeartBeatsAsync(linked.Token)
             );
         }
@@ -102,6 +106,15 @@ public class WebsocketConnectionService : BackgroundService
                 new Heartbeat { CorrelationId = Guid.NewGuid() },
                 stoppingToken
             );
+        }
+    }
+
+    private async Task SendMessagesAsync(WebSocket ws, CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var message = await _messagesQueue.DequeueAsync(stoppingToken);
+            await _connectionManager.SendAsync(message, ws, stoppingToken);
         }
     }
 

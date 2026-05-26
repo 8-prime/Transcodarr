@@ -75,6 +75,7 @@ public class TranscodeManager : BackgroundService
                     request.JobLeaseId,
                     request.FilePath,
                     request.OutputPath,
+                    request.TotalDuration,
                     request.QualitySettings,
                     firstFreeEncoder,
                     stoppingToken
