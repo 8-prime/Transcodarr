@@ -8,7 +8,6 @@ namespace Transcodarr.Core.Services.MediaFiles;
 
 public class LibraryWatcherService : BackgroundService
 {
-    private readonly LibraryService _libraryService;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly Dictionary<Guid, FileSystemWatcher> _fileSystemWatchers = new();
     private readonly ILogger<LibraryWatcherService> _logger;
@@ -17,12 +16,10 @@ public class LibraryWatcherService : BackgroundService
         Channel.CreateBounded<FileSystemEventArgs>(200);
 
     public LibraryWatcherService(
-        LibraryService libraryService,
         IServiceScopeFactory scopeFactory,
         ILogger<LibraryWatcherService> logger
     )
     {
-        _libraryService = libraryService;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -35,6 +32,7 @@ public class LibraryWatcherService : BackgroundService
 
             await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
+            var libraryService = scope.ServiceProvider.GetRequiredService<LibraryService>();
             var libraries = await dbContext.Libraries.ToDictionaryAsync(
                 l => l.Id,
                 l => l,
@@ -52,6 +50,7 @@ public class LibraryWatcherService : BackgroundService
                 await SetupFileSystemWatcher(
                     newLibrary.Id,
                     newLibrary.FileSystemPath,
+                    libraryService,
                     stoppingToken
                 );
             }
@@ -245,6 +244,7 @@ public class LibraryWatcherService : BackgroundService
     private async Task SetupFileSystemWatcher(
         Guid libraryId,
         string fileSystemPath,
+        LibraryService libraryService,
         CancellationToken stoppingToken
     )
     {
@@ -259,7 +259,7 @@ public class LibraryWatcherService : BackgroundService
         fsWatcher.Deleted += OnFileSystemWatcherEvent;
         fsWatcher.Renamed += OnFileSystemWatcherEvent;
         fsWatcher.EnableRaisingEvents = true;
-        await _libraryService.ScanLibraryAsync(fileSystemPath, libraryId, stoppingToken);
+        await libraryService.ScanLibraryAsync(fileSystemPath, libraryId, stoppingToken);
 
         _fileSystemWatchers.Add(libraryId, fsWatcher);
     }
