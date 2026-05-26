@@ -61,7 +61,7 @@ public class JobQueueManagerService : BackgroundService
                 .Include(file => file.Jobs)
                 .Include(file => file.Metadata)
                 .Where(request =>
-                    (request.Status == TranscodeStatus.Pending) && request.Jobs.Count == 0
+                    (request.Status == TranscodeStatus.Pending && request.Jobs.Count == 0)
                     || request.Jobs.All(job => job.Status != TranscodeJobStatus.Active)
                 )
                 .Take(freeSlots)

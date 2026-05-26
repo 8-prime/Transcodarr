@@ -157,7 +157,7 @@ public partial class MessageHandler
             var fileInfo = new FileInfo(job.MediaFile.Path);
             job.Status = TranscodeJobStatus.Completed;
             job.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc;
-
+            job.MediaFile.Status = TranscodeStatus.Completed;
             context.TranscodeResults.Add(
                 new TranscodeResultEntity()
                 {

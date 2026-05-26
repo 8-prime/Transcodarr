@@ -157,6 +157,7 @@ public class WebsocketConnectionService : BackgroundService
                         scope.ServiceProvider.GetRequiredService<FileProbeService>();
                     var res = await fileProbeService.ProbeFileAsync(
                         probeRequest.ProbeFilePath,
+                        probeRequest.MediaFileId,
                         stoppingToken
                     );
                     await _connectionManager.SendAsync(

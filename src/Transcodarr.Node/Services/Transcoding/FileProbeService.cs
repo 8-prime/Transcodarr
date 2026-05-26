@@ -7,6 +7,7 @@ public class FileProbeService
 {
     public async Task<FileProbeResult?> ProbeFileAsync(
         string path,
+        Guid mediaFileId,
         CancellationToken cancellationToken = default
     )
     {
@@ -20,6 +21,7 @@ public class FileProbeService
 
         return new FileProbeResult
         {
+            MediaFileId = mediaFileId, 
             AudioStreams = string.Join(
                 ',',
                 mediaInfo.AudioStreams.Select(a => a.Language).OfType<string>()
