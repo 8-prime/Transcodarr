@@ -28,10 +28,7 @@ public class TranscodarrDbContext : DbContext
             .HasForeignKey(f => f.LibraryId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder
-            .Entity<MediaFileEntity>()
-            .Property(f => f.Path)
-            .HasMaxLength(4096);
+        modelBuilder.Entity<MediaFileEntity>().Property(f => f.Path).HasMaxLength(4096);
 
         modelBuilder
             .Entity<MediaFileEntity>()
@@ -57,15 +54,9 @@ public class TranscodarrDbContext : DbContext
             .Property(m => m.AudioStreams)
             .HasMaxLength(1000);
 
-        modelBuilder
-            .Entity<TranscodeJobEntity>()
-            .Property(j => j.NodeId)
-            .HasMaxLength(256);
+        modelBuilder.Entity<TranscodeJobEntity>().Property(j => j.NodeId).HasMaxLength(256);
 
-        modelBuilder
-            .Entity<TranscodeJobEntity>()
-            .Property(j => j.OutputPath)
-            .HasMaxLength(4096);
+        modelBuilder.Entity<TranscodeJobEntity>().Property(j => j.OutputPath).HasMaxLength(4096);
 
         modelBuilder
             .Entity<TranscodeJobEntity>()
