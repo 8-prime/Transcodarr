@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Transcodarr.Core.Database.Entities;
+﻿namespace Transcodarr.Core.Database.Entities;
 
 public class MediaFileMetadataEntity
 {
@@ -8,7 +6,6 @@ public class MediaFileMetadataEntity
     public Guid MediaFileId { get; init; }
     public MediaFileEntity MediaFileEntity { get; init; } = null!;
 
-    [MaxLength(100)]
     public required string VideoCodec { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }
@@ -17,6 +14,5 @@ public class MediaFileMetadataEntity
     public TimeSpan Duration { get; set; }
     public long FileSizeBytes { get; set; }
 
-    [MaxLength(1000)]
     public required string AudioStreams { get; set; }
 }

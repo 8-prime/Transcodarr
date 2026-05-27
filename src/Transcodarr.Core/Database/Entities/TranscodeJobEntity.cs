@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Transcodarr.Core.Database.Enums;
+﻿using Transcodarr.Core.Database.Enums;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Database.Entities;
@@ -10,10 +9,8 @@ public class TranscodeJobEntity
     public Guid MediaFileId { get; init; }
     public MediaFileEntity MediaFile { get; init; } = null!;
 
-    [MaxLength(256)]
     public required string NodeId { get; init; }
 
-    [MaxLength(4096)]
     public required string OutputPath { get; init; }
     public int ConstantRateFactor { get; init; }
     public AudioCodec AudioCodec { get; init; }

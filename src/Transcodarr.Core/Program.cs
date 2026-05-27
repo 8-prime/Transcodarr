@@ -9,7 +9,7 @@ using Transcodarr.Core.Services.MediaFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<TranscodarrDbContext>(options =>
+builder.Services.AddDbContextFactory<TranscodarrDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("TranscodarrDb"))
 );
 
