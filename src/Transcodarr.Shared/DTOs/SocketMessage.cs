@@ -23,7 +23,7 @@ public record Heartbeat : SocketMessage;
 
 public record ProbeRequest(string ProbeFilePath, Guid MediaFileId) : SocketMessage;
 
-public record ProbeResponse(FileProbeResult Result) : SocketMessage;
+public record ProbeResponse(Guid MediaFileId, FileProbeResult? Result) : SocketMessage;
 
 public record NodeInfoMessage(NodeInfo Info) : SocketMessage;
 

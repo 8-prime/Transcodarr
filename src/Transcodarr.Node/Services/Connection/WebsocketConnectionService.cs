@@ -161,7 +161,10 @@ public class WebsocketConnectionService : BackgroundService
                         stoppingToken
                     );
                     await _connectionManager.SendAsync(
-                        new ProbeResponse(res) { CorrelationId = probeRequest.CorrelationId },
+                        new ProbeResponse(probeRequest.MediaFileId, res)
+                        {
+                            CorrelationId = probeRequest.CorrelationId,
+                        },
                         stoppingToken
                     );
                     break;

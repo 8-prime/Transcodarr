@@ -4,6 +4,7 @@ using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
 using Transcodarr.Core.Services.Configuration;
+using Transcodarr.Core.Services.MediaFiles;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services.Connection;
@@ -49,7 +50,7 @@ public partial class MessageHandler
                 await HandleProgress(progress, cancellationToken);
                 break;
             case ProbeResponse response:
-                await HandleProbeResponse(response.Result, cancellationToken);
+                await HandleProbeResponse(response, cancellationToken);
                 break;
             default:
                 break;
@@ -57,31 +58,43 @@ public partial class MessageHandler
     }
 
     private async Task HandleProbeResponse(
-        FileProbeResult fileProbeResult,
+        ProbeResponse probeResponse,
         CancellationToken cancellationToken
     )
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
         var file = await context.MediaFiles.FirstOrDefaultAsync(
-            f => f.Id == fileProbeResult.MediaFileId,
+            f => f.Id == probeResponse.MediaFileId,
             cancellationToken
         );
 
-        file?.Metadata = new MediaFileMetadataEntity
+        if (file is null || !File.Exists(file.Path))
+        {
+            return;
+        }
+
+        if (probeResponse.Result is null)
+        {
+            var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
+            await fileProbeService.ProbeFileAsync(file.Path, file.Id, cancellationToken);
+            return;
+        }
+
+        file.Metadata = new MediaFileMetadataEntity
         {
             Id = Guid.NewGuid(),
-            AudioStreams = fileProbeResult.AudioStreams,
-            VideoCodec = fileProbeResult.VideoCodec,
-            Duration = fileProbeResult.Duration,
-            BitRate = fileProbeResult.Bitrate,
+            AudioStreams = probeResponse.Result.AudioStreams,
+            VideoCodec = probeResponse.Result.VideoCodec,
+            Duration = probeResponse.Result.Duration,
+            BitRate = probeResponse.Result.Bitrate,
+            Height = probeResponse.Result.Height,
+            Width = probeResponse.Result.Width,
+            IsHdr = probeResponse.Result.IsHdr,
             FileSizeBytes = new FileInfo(file.Path).Length,
-            Height = fileProbeResult.Height,
-            Width = fileProbeResult.Width,
-            IsHdr = fileProbeResult.IsHdr,
         };
 
-        file?.Status = TranscodeStatus.Pending;
+        file.Status = TranscodeStatus.Pending;
 
         await context.SaveChangesAsync(cancellationToken);
     }

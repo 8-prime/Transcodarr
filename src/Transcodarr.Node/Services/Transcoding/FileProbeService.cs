@@ -21,7 +21,6 @@ public class FileProbeService
 
         return new FileProbeResult
         {
-            MediaFileId = mediaFileId,
             AudioStreams = string.Join(
                 ',',
                 mediaInfo.AudioStreams.Select(a => a.Language).OfType<string>()
