@@ -11,7 +11,7 @@ using Transcodarr.Core.Database;
 namespace Transcodarr.Core.Migrations
 {
     [DbContext(typeof(TranscodarrDbContext))]
-    [Migration("20260527202501_InitialMigration")]
+    [Migration("20260527220929_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -214,6 +214,11 @@ namespace Transcodarr.Core.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EncoderName")
+                        .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<long>("FileSizeBytes")

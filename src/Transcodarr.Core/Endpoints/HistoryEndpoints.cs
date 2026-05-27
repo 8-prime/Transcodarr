@@ -17,25 +17,31 @@ public static class HistoryEndpoints
     }
 
     private static async Task<Ok<List<HistoryItemResponse>>> GetHistoryItems(
-        [FromServices] TranscodarrDbContext dbContext, CancellationToken stoppingToken)
+        [FromServices] TranscodarrDbContext dbContext,
+        CancellationToken stoppingToken
+    )
     {
-        return TypedResults.Ok(await dbContext.TranscodeResults
-            .Select(r => new HistoryItemResponse
-            {
-                Id = r.Id,
-                AudioCodec = r.TranscodeJob.AudioCodec,
-                FileName = r.TranscodeJob.MediaFile.Path,
-                LibraryName = r.TranscodeJob.MediaFile.Library.DisplayName ??
-                              r.TranscodeJob.MediaFile.Library.FileSystemPath,
-                ApprovalState = r.ApprovalState,
-                CompletedAt = r.CompletedAt,
-                Crf = r.TranscodeJob.ConstantRateFactor,
-                Duration = r.TranscodeJob.MediaFile.Metadata!.Duration,
-                EncoderUsed = r.TranscodeJob.NodeId, //TODO node must send info about utilized transcoder
-                InputSizeBytes = r.TranscodeJob.MediaFile.Metadata!.FileSizeBytes,
-                OutputSizeBytes = r.FileSizeBytes,
-                VideoCodec = r.TranscodeJob.VideoCodec,
-                VmafScore = r.VmafScore
-            }).ToListAsync(stoppingToken));
+        return TypedResults.Ok(
+            await dbContext
+                .TranscodeResults.Select(r => new HistoryItemResponse
+                {
+                    Id = r.Id,
+                    AudioCodec = r.TranscodeJob.AudioCodec,
+                    FileName = r.TranscodeJob.MediaFile.Path,
+                    LibraryName =
+                        r.TranscodeJob.MediaFile.Library.DisplayName
+                        ?? r.TranscodeJob.MediaFile.Library.FileSystemPath,
+                    ApprovalState = r.ApprovalState,
+                    CompletedAt = r.CompletedAt,
+                    Crf = r.TranscodeJob.ConstantRateFactor,
+                    Duration = r.TranscodeJob.MediaFile.Metadata!.Duration,
+                    EncoderUsed = r.EncoderName,
+                    InputSizeBytes = r.TranscodeJob.MediaFile.Metadata!.FileSizeBytes,
+                    OutputSizeBytes = r.FileSizeBytes,
+                    VideoCodec = r.TranscodeJob.VideoCodec,
+                    VmafScore = r.VmafScore,
+                })
+                .ToListAsync(stoppingToken)
+        );
     }
 }

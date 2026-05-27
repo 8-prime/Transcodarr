@@ -16,20 +16,26 @@ public static class QueueEndpoints
         return endpoints;
     }
 
-    private static async Task<Ok<List<QueueItemResponse>>> GetQueueItems([FromServices] TranscodarrDbContext dbContext,
-        CancellationToken stoppingToken)
+    private static async Task<Ok<List<QueueItemResponse>>> GetQueueItems(
+        [FromServices] TranscodarrDbContext dbContext,
+        CancellationToken stoppingToken
+    )
     {
-        return TypedResults.Ok(await dbContext
-            .TranscodeJobs.Select(j => new QueueItemResponse
-            {
-                Id = j.Id,
-                CreatedAt = j.CreatedAt,
-                FileName = j.MediaFile.Path,
-                LeaseExpiresAt = j.LeaseExpiresAt,
-                LibraryName = j.MediaFile.Library.DisplayName ?? j.MediaFile.Library.FileSystemPath,
-                NodeId = j.NodeId,
-                Progress = j.Progress,
-                Status = j.Status,
-            }).ToListAsync(stoppingToken));
+        return TypedResults.Ok(
+            await dbContext
+                .TranscodeJobs.Select(j => new QueueItemResponse
+                {
+                    Id = j.Id,
+                    CreatedAt = j.CreatedAt,
+                    FileName = j.MediaFile.Path,
+                    LeaseExpiresAt = j.LeaseExpiresAt,
+                    LibraryName =
+                        j.MediaFile.Library.DisplayName ?? j.MediaFile.Library.FileSystemPath,
+                    NodeId = j.NodeId,
+                    Progress = j.Progress,
+                    Status = j.Status,
+                })
+                .ToListAsync(stoppingToken)
+        );
     }
 }

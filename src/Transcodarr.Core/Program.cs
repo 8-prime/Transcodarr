@@ -38,9 +38,7 @@ using (var scope = app.Services.CreateScope())
     {
         await configuration.InitializeAsync(CancellationToken.None);
     }
-    catch
-    {
-    }
+    catch { }
 }
 
 app.UseWebSockets();

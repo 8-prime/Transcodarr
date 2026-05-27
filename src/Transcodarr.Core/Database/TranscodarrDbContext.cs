@@ -65,6 +65,8 @@ public class TranscodarrDbContext : DbContext
             .HasForeignKey<TranscodeResultEntity>(r => r.TranscodeJobId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<TranscodeResultEntity>().Property(r => r.EncoderName).HasMaxLength(100);
+
         modelBuilder.Entity<MediaFileEntity>().HasIndex(f => f.LibraryId);
         modelBuilder.Entity<MediaFileEntity>().HasIndex(f => f.Status);
         modelBuilder.Entity<MediaFileMetadataEntity>().HasIndex(m => m.MediaFileId).IsUnique();

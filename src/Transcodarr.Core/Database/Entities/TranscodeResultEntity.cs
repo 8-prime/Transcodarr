@@ -6,6 +6,7 @@ public class TranscodeResultEntity
 {
     public Guid Id { get; set; }
     public Guid TranscodeJobId { get; set; }
+    public required string EncoderName { get; set; }
     public TranscodeJobEntity TranscodeJob { get; set; } = null!;
     public long FileSizeBytes { get; set; }
     public double? VmafScore { get; set; }

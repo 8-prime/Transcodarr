@@ -172,13 +172,14 @@ public partial class MessageHandler
             job.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc;
             job.MediaFile.Status = TranscodeStatus.Completed;
             context.TranscodeResults.Add(
-                new TranscodeResultEntity()
+                new TranscodeResultEntity
                 {
                     ApprovalState = ApprovalState.AutoApproved,
                     CompletedAt = DateTimeOffset.UtcNow,
                     FileSizeBytes = transcodeResponse.OutputSizeBytes,
                     TranscodeJob = job,
                     VmafScore = 0,
+                    EncoderName = transcodeResponse.EncoderSettingsSnapshot.EncoderName,
                 }
             );
         }
@@ -193,6 +194,7 @@ public partial class MessageHandler
                     FileSizeBytes = transcodeResponse.OutputSizeBytes,
                     TranscodeJob = job,
                     VmafScore = 0,
+                    EncoderName = transcodeResponse.EncoderSettingsSnapshot.EncoderName,
                 }
             );
         }

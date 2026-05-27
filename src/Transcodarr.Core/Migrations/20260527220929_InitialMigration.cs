@@ -125,6 +125,7 @@ namespace Transcodarr.Core.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     TranscodeJobId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    EncoderName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     FileSizeBytes = table.Column<long>(type: "INTEGER", nullable: false),
                     VmafScore = table.Column<double>(type: "REAL", nullable: true),
                     ApprovalState = table.Column<int>(type: "INTEGER", nullable: false),

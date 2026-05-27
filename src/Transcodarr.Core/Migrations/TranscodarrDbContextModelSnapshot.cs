@@ -213,6 +213,11 @@ namespace Transcodarr.Core.Migrations
                     b.Property<DateTimeOffset>("CompletedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("EncoderName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("FileSizeBytes")
                         .HasColumnType("INTEGER");
 

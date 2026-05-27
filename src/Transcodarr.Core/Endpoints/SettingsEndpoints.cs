@@ -17,7 +17,8 @@ public static class SettingsEndpoints
     }
 
     private static Results<Ok<AppSettingsResponse>, BadRequest<string>> GetSettings(
-        [FromServices] ConfigurationService configurationService)
+        [FromServices] ConfigurationService configurationService
+    )
     {
         if (!configurationService.Initialized)
         {
@@ -25,43 +26,54 @@ public static class SettingsEndpoints
         }
 
         var internalConfig = configurationService.Current;
-        return TypedResults.Ok(new AppSettingsResponse
-        {
-            AudioCodec = internalConfig.TranscodeAudioCodec,
-            VideoCodec = internalConfig.TranscodeVideoCodec,
-            AutoApplyTranscode = internalConfig.AutoApplyTranscode,
-            ConstantRateFactor = internalConfig.ConstantRateFactor,
-            EncoderPreset = internalConfig.TranscodeEncoderPreset,
-            JobExpirationInMinutes = internalConfig.JobExpirationInMinutes,
-            TranscodeTempDirectory = internalConfig.TranscodeTempDirectory,
-        });
+        return TypedResults.Ok(
+            new AppSettingsResponse
+            {
+                AudioCodec = internalConfig.TranscodeAudioCodec,
+                VideoCodec = internalConfig.TranscodeVideoCodec,
+                AutoApplyTranscode = internalConfig.AutoApplyTranscode,
+                ConstantRateFactor = internalConfig.ConstantRateFactor,
+                EncoderPreset = internalConfig.TranscodeEncoderPreset,
+                JobExpirationInMinutes = internalConfig.JobExpirationInMinutes,
+                TranscodeTempDirectory = internalConfig.TranscodeTempDirectory,
+            }
+        );
     }
 
-    private static async Task<Results<Ok<AppSettingsResponse>, InternalServerError<string>>> PutSettings(
+    private static async Task<
+        Results<Ok<AppSettingsResponse>, InternalServerError<string>>
+    > PutSettings(
         [FromBody] UpdateAppSettingsRequest updateAppSettingsRequest,
-        [FromBody] ConfigurationService configurationService, CancellationToken stoppingToken)
+        [FromServices] ConfigurationService configurationService,
+        CancellationToken stoppingToken
+    )
     {
-        await configurationService.UpdateAsync(c =>
-        {
-            c.TranscodeAudioCodec = updateAppSettingsRequest.AudioCodec;
-            c.TranscodeVideoCodec = updateAppSettingsRequest.VideoCodec;
-            c.AutoApplyTranscode = updateAppSettingsRequest.AutoApplyTranscode;
-            c.ConstantRateFactor = updateAppSettingsRequest.ConstantRateFactor;
-            c.TranscodeEncoderPreset = updateAppSettingsRequest.EncoderPreset;
-            c.JobExpirationInMinutes = updateAppSettingsRequest.JobExpirationInMinutes;
-            c.TranscodeTempDirectory = updateAppSettingsRequest.TranscodeTempDirectory;
-        }, stoppingToken);
+        await configurationService.UpdateAsync(
+            c =>
+            {
+                c.TranscodeAudioCodec = updateAppSettingsRequest.AudioCodec;
+                c.TranscodeVideoCodec = updateAppSettingsRequest.VideoCodec;
+                c.AutoApplyTranscode = updateAppSettingsRequest.AutoApplyTranscode;
+                c.ConstantRateFactor = updateAppSettingsRequest.ConstantRateFactor;
+                c.TranscodeEncoderPreset = updateAppSettingsRequest.EncoderPreset;
+                c.JobExpirationInMinutes = updateAppSettingsRequest.JobExpirationInMinutes;
+                c.TranscodeTempDirectory = updateAppSettingsRequest.TranscodeTempDirectory;
+            },
+            stoppingToken
+        );
 
         var internalConfig = configurationService.Current;
-        return TypedResults.Ok(new AppSettingsResponse
-        {
-            AudioCodec = internalConfig.TranscodeAudioCodec,
-            VideoCodec = internalConfig.TranscodeVideoCodec,
-            AutoApplyTranscode = internalConfig.AutoApplyTranscode,
-            ConstantRateFactor = internalConfig.ConstantRateFactor,
-            EncoderPreset = internalConfig.TranscodeEncoderPreset,
-            JobExpirationInMinutes = internalConfig.JobExpirationInMinutes,
-            TranscodeTempDirectory = internalConfig.TranscodeTempDirectory,
-        });
+        return TypedResults.Ok(
+            new AppSettingsResponse
+            {
+                AudioCodec = internalConfig.TranscodeAudioCodec,
+                VideoCodec = internalConfig.TranscodeVideoCodec,
+                AutoApplyTranscode = internalConfig.AutoApplyTranscode,
+                ConstantRateFactor = internalConfig.ConstantRateFactor,
+                EncoderPreset = internalConfig.TranscodeEncoderPreset,
+                JobExpirationInMinutes = internalConfig.JobExpirationInMinutes,
+                TranscodeTempDirectory = internalConfig.TranscodeTempDirectory,
+            }
+        );
     }
 }
