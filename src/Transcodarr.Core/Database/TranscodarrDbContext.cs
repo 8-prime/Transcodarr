@@ -64,5 +64,12 @@ public class TranscodarrDbContext : DbContext
             .WithOne(r => r.TranscodeJob)
             .HasForeignKey<TranscodeResultEntity>(r => r.TranscodeJobId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MediaFileEntity>().HasIndex(f => f.LibraryId);
+        modelBuilder.Entity<MediaFileEntity>().HasIndex(f => f.Status);
+        modelBuilder.Entity<MediaFileMetadataEntity>().HasIndex(m => m.MediaFileId).IsUnique();
+        modelBuilder.Entity<TranscodeJobEntity>().HasIndex(j => j.MediaFileId);
+        modelBuilder.Entity<TranscodeJobEntity>().HasIndex(j => new { j.Status, j.LeaseExpiresAt });
+        modelBuilder.Entity<TranscodeResultEntity>().HasIndex(r => r.TranscodeJobId).IsUnique();
     }
 }
