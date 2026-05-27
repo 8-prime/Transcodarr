@@ -11,7 +11,7 @@ namespace Transcodarr.Core.Endpoints;
 
 public static class ConnectionEndpoints
 {
-    public static IEndpointRouteBuilder MapConnection(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapConnections(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("connections");
         group.MapGet("", GetConnections);

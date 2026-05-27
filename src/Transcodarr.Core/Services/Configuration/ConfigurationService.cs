@@ -17,6 +17,8 @@ public class ConfigurationService
     public AppConfigurationEntity Current =>
         _config ?? throw new InvalidOperationException("Configuration not loaded");
 
+    public bool Initialized => _config is not null;
+
     public async Task InitializeAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);

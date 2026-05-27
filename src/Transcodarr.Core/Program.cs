@@ -38,10 +38,16 @@ using (var scope = app.Services.CreateScope())
     {
         await configuration.InitializeAsync(CancellationToken.None);
     }
-    catch { }
+    catch
+    {
+    }
 }
 
 app.UseWebSockets();
-app.MapConnection();
+app.MapConnections();
+app.MapHistoryEndpoints();
+app.MapLibraryEndpoints();
+app.MapQueueEndpoints();
+app.MapSettingsEndpoints();
 
 app.Run();
