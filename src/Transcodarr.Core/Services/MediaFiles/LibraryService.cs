@@ -63,7 +63,6 @@ public class LibraryService
             }
 
             _logger.LogInformation("File changed, re-probing {FilePath}", file);
-            mediaFile.Metadata = null;
             mediaFile.Status = TranscodeStatus.Discovered;
             changedCount++;
         }

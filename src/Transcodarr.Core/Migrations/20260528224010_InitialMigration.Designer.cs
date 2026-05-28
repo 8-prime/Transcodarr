@@ -11,7 +11,7 @@ using Transcodarr.Core.Database;
 namespace Transcodarr.Core.Migrations
 {
     [DbContext(typeof(TranscodarrDbContext))]
-    [Migration("20260528111114_InitialMigration")]
+    [Migration("20260528224010_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -146,7 +146,7 @@ namespace Transcodarr.Core.Migrations
                     b.HasIndex("MediaFileId")
                         .IsUnique();
 
-                    b.ToTable("MediaFileMetadataEntity");
+                    b.ToTable("MediaFileMetadata");
                 });
 
             modelBuilder.Entity("Transcodarr.Core.Database.Entities.TranscodeJobEntity", b =>

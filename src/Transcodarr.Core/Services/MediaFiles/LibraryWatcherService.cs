@@ -183,7 +183,6 @@ public class LibraryWatcherService : BackgroundService
             var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
             changed.FileModifiedAt = new FileInfo(fileSystemEventArgs.FullPath).LastWriteTimeUtc;
             changed.Status = TranscodeStatus.Discovered;
-            changed.Metadata = null;
             await fileProbeService.ProbeFileAsync(changed.Path, changed.Id, stoppingToken);
         }
     }

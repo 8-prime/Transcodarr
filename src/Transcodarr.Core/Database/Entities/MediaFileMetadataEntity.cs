@@ -2,9 +2,9 @@
 
 public class MediaFileMetadataEntity
 {
-    public Guid Id { get; init; }
-    public Guid MediaFileId { get; init; }
-    public MediaFileEntity MediaFileEntity { get; init; } = null!;
+    public Guid Id { get; set; }
+    public Guid MediaFileId { get; set; }
+    public MediaFileEntity MediaFileEntity { get; set; } = null!;
 
     public required string VideoCodec { get; set; }
     public int Width { get; set; }

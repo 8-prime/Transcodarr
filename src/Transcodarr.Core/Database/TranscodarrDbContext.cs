@@ -9,6 +9,7 @@ public class TranscodarrDbContext : DbContext
     public DbSet<AppConfigurationEntity> AppConfigurations { get; set; }
     public DbSet<LibraryEntity> Libraries { get; set; }
     public DbSet<MediaFileEntity> MediaFiles { get; set; }
+    public DbSet<MediaFileMetadataEntity> MediaFileMetadata { get; set; }
     public DbSet<TranscodeJobEntity> TranscodeJobs { get; set; }
     public DbSet<TranscodeResultEntity> TranscodeResults { get; set; }
 

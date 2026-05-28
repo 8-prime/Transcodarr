@@ -70,10 +70,9 @@ public partial class MessageHandler
 
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-        var file = await context.MediaFiles.FirstOrDefaultAsync(
-            f => f.Id == probeResponse.MediaFileId,
-            cancellationToken
-        );
+        var file = await context
+            .MediaFiles.Include(f => f.Metadata)
+            .FirstOrDefaultAsync(f => f.Id == probeResponse.MediaFileId, cancellationToken);
 
         if (file is null || !File.Exists(file.Path))
         {
@@ -98,18 +97,36 @@ public partial class MessageHandler
             file.Path
         );
 
-        file.Metadata = new MediaFileMetadataEntity
+        var fileSizeBytes = new FileInfo(file.Path).Length;
+        if (file.Metadata is null)
         {
-            Id = Guid.NewGuid(),
-            AudioStreams = probeResponse.Result.AudioStreams,
-            VideoCodec = probeResponse.Result.VideoCodec,
-            Duration = probeResponse.Result.Duration,
-            BitRate = probeResponse.Result.Bitrate,
-            Height = probeResponse.Result.Height,
-            Width = probeResponse.Result.Width,
-            IsHdr = probeResponse.Result.IsHdr,
-            FileSizeBytes = new FileInfo(file.Path).Length,
-        };
+            context.MediaFileMetadata.Add(
+                new MediaFileMetadataEntity
+                {
+                    Id = Guid.NewGuid(),
+                    MediaFileId = file.Id,
+                    AudioStreams = probeResponse.Result.AudioStreams,
+                    VideoCodec = probeResponse.Result.VideoCodec,
+                    Duration = probeResponse.Result.Duration,
+                    BitRate = probeResponse.Result.Bitrate,
+                    Height = probeResponse.Result.Height,
+                    Width = probeResponse.Result.Width,
+                    IsHdr = probeResponse.Result.IsHdr,
+                    FileSizeBytes = fileSizeBytes,
+                }
+            );
+        }
+        else
+        {
+            file.Metadata.AudioStreams = probeResponse.Result.AudioStreams;
+            file.Metadata.VideoCodec = probeResponse.Result.VideoCodec;
+            file.Metadata.Duration = probeResponse.Result.Duration;
+            file.Metadata.BitRate = probeResponse.Result.Bitrate;
+            file.Metadata.Height = probeResponse.Result.Height;
+            file.Metadata.Width = probeResponse.Result.Width;
+            file.Metadata.IsHdr = probeResponse.Result.IsHdr;
+            file.Metadata.FileSizeBytes = fileSizeBytes;
+        }
 
         file.Status = TranscodeStatus.Pending;
 

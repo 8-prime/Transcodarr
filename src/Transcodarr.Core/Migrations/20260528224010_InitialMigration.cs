@@ -73,7 +73,7 @@ namespace Transcodarr.Core.Migrations
             );
 
             migrationBuilder.CreateTable(
-                name: "MediaFileMetadataEntity",
+                name: "MediaFileMetadata",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
@@ -97,9 +97,9 @@ namespace Transcodarr.Core.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MediaFileMetadataEntity", x => x.Id);
+                    table.PrimaryKey("PK_MediaFileMetadata", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_MediaFileMetadataEntity_MediaFiles_MediaFileId",
+                        name: "FK_MediaFileMetadata_MediaFiles_MediaFileId",
                         column: x => x.MediaFileId,
                         principalTable: "MediaFiles",
                         principalColumn: "Id",
@@ -174,8 +174,8 @@ namespace Transcodarr.Core.Migrations
             );
 
             migrationBuilder.CreateIndex(
-                name: "IX_MediaFileMetadataEntity_MediaFileId",
-                table: "MediaFileMetadataEntity",
+                name: "IX_MediaFileMetadata_MediaFileId",
+                table: "MediaFileMetadata",
                 column: "MediaFileId",
                 unique: true
             );
@@ -217,7 +217,7 @@ namespace Transcodarr.Core.Migrations
         {
             migrationBuilder.DropTable(name: "AppConfigurations");
 
-            migrationBuilder.DropTable(name: "MediaFileMetadataEntity");
+            migrationBuilder.DropTable(name: "MediaFileMetadata");
 
             migrationBuilder.DropTable(name: "TranscodeResults");
 

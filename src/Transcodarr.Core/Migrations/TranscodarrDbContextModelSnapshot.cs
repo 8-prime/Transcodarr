@@ -143,7 +143,7 @@ namespace Transcodarr.Core.Migrations
                     b.HasIndex("MediaFileId")
                         .IsUnique();
 
-                    b.ToTable("MediaFileMetadataEntity");
+                    b.ToTable("MediaFileMetadata");
                 });
 
             modelBuilder.Entity("Transcodarr.Core.Database.Entities.TranscodeJobEntity", b =>
