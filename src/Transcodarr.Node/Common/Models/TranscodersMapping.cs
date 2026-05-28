@@ -8,7 +8,7 @@ public static class TranscodersMapping
     {
         { VideoCodec.H264, ["libx264", "h264_nvenc", "h264_sqv", "h264_amf"] },
         { VideoCodec.H265, ["libx265", "hevc_nvenc", "hevc_sqv", "hevc_amf"] },
-        { VideoCodec.H265, ["libaom-av1", "av1_nvenc", "av1_sqv", "av1_amf"] },
+        { VideoCodec.Av1, ["libaom-av1", "av1_nvenc", "av1_sqv", "av1_amf"] },
     };
 
     public static bool EncoderMatchesCodec(string encoder, VideoCodec codec)
