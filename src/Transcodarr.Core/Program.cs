@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Endpoints;
 using Transcodarr.Core.Services;
@@ -9,6 +10,8 @@ using Transcodarr.Core.Services.Jobs;
 using Transcodarr.Core.Services.MediaFiles;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.ConfigureHttpJsonOptions(opts =>
     opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter())

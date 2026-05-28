@@ -76,10 +76,21 @@ public partial class MessageHandler
 
         if (probeResponse.Result is null)
         {
+            _logger.LogWarning(
+                "Probe failed for file {FileId} {FilePath}, scheduling retry",
+                file.Id,
+                file.Path
+            );
             var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
             await fileProbeService.ProbeFileAsync(file.Path, file.Id, cancellationToken);
             return;
         }
+
+        _logger.LogInformation(
+            "Probe response received for file {FileId} {FilePath}, setting to Pending",
+            file.Id,
+            file.Path
+        );
 
         file.Metadata = new MediaFileMetadataEntity
         {

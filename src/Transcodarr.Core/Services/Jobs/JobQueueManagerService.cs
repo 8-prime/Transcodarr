@@ -54,7 +54,16 @@ public class JobQueueManagerService : BackgroundService
                     setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.TimedOut),
                     stoppingToken
                 );
-            _logger.LogInformation("Found {TimeoutOutJobsCound} timed out jobs", timedOutJobs);
+            if (timedOutJobs > 0)
+                _logger.LogInformation("Marked {TimedOutJobCount} jobs as timed out", timedOutJobs);
+
+            if (freeSlots == 0)
+            {
+                _logger.LogInformation(
+                    "No free slots available on any node, skipping job creation"
+                );
+                continue;
+            }
 
             var pendingJobs = await dbContext
                 .MediaFiles.AsNoTracking()
@@ -69,6 +78,11 @@ public class JobQueueManagerService : BackgroundService
                 )
                 .Take(freeSlots)
                 .ToListAsync(cancellationToken: stoppingToken);
+
+            _logger.LogInformation(
+                "Found {PendingJobCount} pending files eligible for transcoding",
+                pendingJobs.Count
+            );
 
             foreach (var pendingRequest in pendingJobs)
             {
@@ -95,13 +109,24 @@ public class JobQueueManagerService : BackgroundService
         var conn = _connections.GetConnections().FirstOrDefault(c => c.FreeSlots > 0);
         if (conn is null)
         {
+            _logger.LogWarning("No node with free slots found while creating job");
             return;
         }
 
         if (pendingFile.Metadata is null)
         {
+            _logger.LogWarning(
+                "Skipping job creation for {FilePath}: metadata not available",
+                pendingFile.Path
+            );
             return;
         }
+
+        _logger.LogInformation(
+            "Creating transcode job for {FilePath} on node {NodeId}",
+            pendingFile.Path,
+            conn.ConnectionId
+        );
 
         var fileInfo = new FileInfo(pendingFile.Path);
         var outputPath = Path.Join(

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Common.Constants;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
@@ -10,11 +10,17 @@ public class LibraryService
 {
     private readonly TranscodarrDbContext _dbContext;
     private readonly FileProbeService _fileProbeService;
+    private readonly ILogger<LibraryService> _logger;
 
-    public LibraryService(TranscodarrDbContext dbContext, FileProbeService fileProbeService)
+    public LibraryService(
+        TranscodarrDbContext dbContext,
+        FileProbeService fileProbeService,
+        ILogger<LibraryService> logger
+    )
     {
         _dbContext = dbContext;
         _fileProbeService = fileProbeService;
+        _logger = logger;
     }
 
     public async Task ScanLibraryAsync(
@@ -23,10 +29,15 @@ public class LibraryService
         CancellationToken stoppingToken
     )
     {
+        _logger.LogInformation("Scanning library {LibraryPath}", libraryPath);
+
         var knownFiles = await _dbContext
             .MediaFiles.AsNoTracking()
             .Include(f => f.Library)
             .ToDictionaryAsync(f => f.Path, stoppingToken);
+
+        var newCount = 0;
+        var changedCount = 0;
 
         foreach (
             var file in Directory
@@ -37,7 +48,9 @@ public class LibraryService
             var fi = new FileInfo(file);
             if (!knownFiles.Remove(file, out var libraryScanInfo))
             {
+                _logger.LogInformation("Discovered new file {FilePath}", file);
                 await AddNewFile(file, libraryId, stoppingToken);
+                newCount++;
                 continue;
             }
 
@@ -55,10 +68,19 @@ public class LibraryService
                 continue;
             }
 
+            _logger.LogInformation("File changed, re-probing {FilePath}", file);
             mediaFile.Metadata = null;
             mediaFile.Status = TranscodeStatus.Discovered;
             await _fileProbeService.ProbeFileAsync(file, mediaFile.Id, stoppingToken);
+            changedCount++;
         }
+
+        _logger.LogInformation(
+            "Library scan complete for {LibraryPath}: {NewCount} new, {ChangedCount} changed",
+            libraryPath,
+            newCount,
+            changedCount
+        );
     }
 
     public async Task AddNewFile(string file, Guid libraryId, CancellationToken stoppingToken)

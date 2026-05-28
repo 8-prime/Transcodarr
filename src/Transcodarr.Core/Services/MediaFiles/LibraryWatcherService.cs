@@ -1,4 +1,4 @@
-﻿using System.Threading.Channels;
+using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Common.Constants;
 using Transcodarr.Core.Database;
@@ -47,6 +47,11 @@ public class LibraryWatcherService : BackgroundService
 
             foreach (var newLibrary in newLibraries)
             {
+                _logger.LogInformation(
+                    "New library detected {LibraryId}, setting up watcher for {Path}",
+                    newLibrary.Id,
+                    newLibrary.FileSystemPath
+                );
                 await SetupFileSystemWatcher(
                     newLibrary.Id,
                     newLibrary.FileSystemPath,
@@ -57,6 +62,10 @@ public class LibraryWatcherService : BackgroundService
 
             foreach (var staleLibraryId in staleLibraries)
             {
+                _logger.LogInformation(
+                    "Removing stale library watcher {LibraryId}",
+                    staleLibraryId
+                );
                 RemoveFileSystemWatcher(staleLibraryId);
             }
 
@@ -86,6 +95,13 @@ public class LibraryWatcherService : BackgroundService
                 )
             )
                 continue;
+
+            _logger.LogDebug(
+                "File system event {ChangeType} for {Path}",
+                fileSystemEventArgs.ChangeType,
+                fileSystemEventArgs.FullPath
+            );
+
             await using var scope = _scopeFactory.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
             try
