@@ -17,17 +17,22 @@ namespace Transcodarr.Core.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     AutoApplyTranscode = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TranscodeTempDirectory = table.Column<string>(type: "TEXT", maxLength: 4096, nullable: false),
+                    TranscodeTempDirectory = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 4096,
+                        nullable: false
+                    ),
                     TranscodeAudioCodec = table.Column<int>(type: "INTEGER", nullable: false),
                     TranscodeEncoderPreset = table.Column<int>(type: "INTEGER", nullable: false),
                     TranscodeVideoCodec = table.Column<int>(type: "INTEGER", nullable: false),
                     ConstantRateFactor = table.Column<int>(type: "INTEGER", nullable: false),
-                    JobExpirationInMinutes = table.Column<int>(type: "INTEGER", nullable: false)
+                    JobExpirationInMinutes = table.Column<int>(type: "INTEGER", nullable: false),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AppConfigurations", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Libraries",
@@ -35,12 +40,13 @@ namespace Transcodarr.Core.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     FileSystemPath = table.Column<string>(type: "TEXT", nullable: false),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: true)
+                    DisplayName = table.Column<string>(type: "TEXT", nullable: true),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Libraries", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "MediaFiles",
@@ -51,7 +57,7 @@ namespace Transcodarr.Core.Migrations
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
                     Path = table.Column<string>(type: "TEXT", maxLength: 4096, nullable: false),
                     DiscoveredAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    FileModifiedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    FileModifiedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -61,8 +67,10 @@ namespace Transcodarr.Core.Migrations
                         column: x => x.LibraryId,
                         principalTable: "Libraries",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "MediaFileMetadataEntity",
@@ -70,14 +78,22 @@ namespace Transcodarr.Core.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     MediaFileId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    VideoCodec = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    VideoCodec = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 100,
+                        nullable: false
+                    ),
                     Width = table.Column<int>(type: "INTEGER", nullable: false),
                     Height = table.Column<int>(type: "INTEGER", nullable: false),
                     BitRate = table.Column<long>(type: "INTEGER", nullable: false),
                     IsHdr = table.Column<bool>(type: "INTEGER", nullable: false),
                     Duration = table.Column<TimeSpan>(type: "TEXT", nullable: false),
                     FileSizeBytes = table.Column<long>(type: "INTEGER", nullable: false),
-                    AudioStreams = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false)
+                    AudioStreams = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 1000,
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
@@ -87,8 +103,10 @@ namespace Transcodarr.Core.Migrations
                         column: x => x.MediaFileId,
                         principalTable: "MediaFiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "TranscodeJobs",
@@ -97,7 +115,11 @@ namespace Transcodarr.Core.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     MediaFileId = table.Column<Guid>(type: "TEXT", nullable: false),
                     NodeId = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
-                    OutputPath = table.Column<string>(type: "TEXT", maxLength: 4096, nullable: false),
+                    OutputPath = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 4096,
+                        nullable: false
+                    ),
                     ConstantRateFactor = table.Column<int>(type: "INTEGER", nullable: false),
                     AudioCodec = table.Column<int>(type: "INTEGER", nullable: false),
                     VideoCodec = table.Column<int>(type: "INTEGER", nullable: false),
@@ -106,7 +128,7 @@ namespace Transcodarr.Core.Migrations
                     Progress = table.Column<double>(type: "REAL", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
                     LeaseExpiresAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    CompletedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+                    CompletedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -116,8 +138,10 @@ namespace Transcodarr.Core.Migrations
                         column: x => x.MediaFileId,
                         principalTable: "MediaFiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "TranscodeResults",
@@ -125,12 +149,16 @@ namespace Transcodarr.Core.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     TranscodeJobId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EncoderName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    EncoderName = table.Column<string>(
+                        type: "TEXT",
+                        maxLength: 100,
+                        nullable: false
+                    ),
                     FileSizeBytes = table.Column<long>(type: "INTEGER", nullable: false),
                     VmafScore = table.Column<double>(type: "REAL", nullable: true),
                     ApprovalState = table.Column<int>(type: "INTEGER", nullable: false),
                     CompletedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    ReviewedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+                    ReviewedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -140,62 +168,64 @@ namespace Transcodarr.Core.Migrations
                         column: x => x.TranscodeJobId,
                         principalTable: "TranscodeJobs",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaFileMetadataEntity_MediaFileId",
                 table: "MediaFileMetadataEntity",
                 column: "MediaFileId",
-                unique: true);
+                unique: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaFiles_LibraryId",
                 table: "MediaFiles",
-                column: "LibraryId");
+                column: "LibraryId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaFiles_Status",
                 table: "MediaFiles",
-                column: "Status");
+                column: "Status"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_TranscodeJobs_MediaFileId",
                 table: "TranscodeJobs",
-                column: "MediaFileId");
+                column: "MediaFileId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_TranscodeJobs_Status_LeaseExpiresAt",
                 table: "TranscodeJobs",
-                columns: new[] { "Status", "LeaseExpiresAt" });
+                columns: new[] { "Status", "LeaseExpiresAt" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_TranscodeResults_TranscodeJobId",
                 table: "TranscodeResults",
                 column: "TranscodeJobId",
-                unique: true);
+                unique: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "AppConfigurations");
+            migrationBuilder.DropTable(name: "AppConfigurations");
 
-            migrationBuilder.DropTable(
-                name: "MediaFileMetadataEntity");
+            migrationBuilder.DropTable(name: "MediaFileMetadataEntity");
 
-            migrationBuilder.DropTable(
-                name: "TranscodeResults");
+            migrationBuilder.DropTable(name: "TranscodeResults");
 
-            migrationBuilder.DropTable(
-                name: "TranscodeJobs");
+            migrationBuilder.DropTable(name: "TranscodeJobs");
 
-            migrationBuilder.DropTable(
-                name: "MediaFiles");
+            migrationBuilder.DropTable(name: "MediaFiles");
 
-            migrationBuilder.DropTable(
-                name: "Libraries");
+            migrationBuilder.DropTable(name: "Libraries");
         }
     }
 }

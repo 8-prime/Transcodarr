@@ -28,15 +28,36 @@ const PRESETS: AppSettings['preset'][] = [
   'Veryslow',
 ]
 
+const DEFAULT_SETTINGS: AppSettings = {
+  videoCodec: "H265",
+  audioCodec: "Copy",
+  preset: "Slower",
+  crf: 20,
+  autoApplyTranscode: true,
+  jobExpirationInMinutes: 30,
+  transcodeTempDirectory: '/tmp/transcodarr/'
+}
+
 export function SettingsPage() {
   const queryClient = useQueryClient()
   const { data: settings } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => apiFetch<AppSettings>('/settings'),
+    queryFn: async () => {
+      try{
+        apiFetch<AppSettings>('/settings')
+      }
+      catch (e) {
+        if((e as {status?: number}).status === 404) return null
+        throw e
+      }
+    },
+    retry: (count, e) =>
+      (e as {status?: number}).status === 404 ? false : count < 3
   })
 
   const [draft, setDraft] = useState<AppSettings | null>(null)
-  const current = draft ?? settings
+  const current = draft ?? settings ?? DEFAULT_SETTINGS
+  const needsInit = settings === undefined
 
   const { mutate: save, isPending } = useMutation({
     mutationFn: (s: AppSettings) =>
@@ -55,7 +76,7 @@ export function SettingsPage() {
         title="Settings"
         description="Encoder defaults applied to every queued job."
         actions={
-          <Button size="sm" disabled={!draft || isPending} onClick={() => save(current)}>
+          <Button size="sm" disabled={(!draft && !needsInit) || isPending} onClick={() => save(current)}>
             <Save className="h-3.5 w-3.5" />
             Save
           </Button>

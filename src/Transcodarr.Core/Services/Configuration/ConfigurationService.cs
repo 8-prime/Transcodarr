@@ -32,9 +32,23 @@ public class ConfigurationService
         CancellationToken ct = default
     )
     {
-        apply(_config!);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        db.AppConfigurations.Update(_config!);
+        if (!Initialized)
+        {
+            var newSettings = new AppConfigurationEntity
+            {
+                Id = Guid.NewGuid(),
+                TranscodeTempDirectory = "",
+            };
+            apply(newSettings);
+            _config = newSettings;
+            db.AppConfigurations.Add(newSettings);
+        }
+        else
+        {
+            apply(_config!);
+            db.AppConfigurations.Update(_config!);
+        }
         await db.SaveChangesAsync(ct);
     }
 }

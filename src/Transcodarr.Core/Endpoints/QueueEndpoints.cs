@@ -33,8 +33,10 @@ public static class QueueEndpoints
                     NodeId = j.NodeId,
                     ProgressPct = j.Progress,
                     State = j.Status.ToString(),
-                    AttemptNumber = dbContext.TranscodeJobs.Count(jobs => jobs.MediaFileId == j.MediaFileId),
-                    TargetCodec = j.VideoCodec.ToString()
+                    AttemptNumber = dbContext.TranscodeJobs.Count(jobs =>
+                        jobs.MediaFileId == j.MediaFileId
+                    ),
+                    TargetCodec = j.VideoCodec.ToString(),
                 })
                 .ToListAsync(stoppingToken)
         );
