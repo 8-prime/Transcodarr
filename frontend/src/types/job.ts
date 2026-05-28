@@ -11,7 +11,7 @@ export interface TranscodeJob {
   id: string
   fileName: string
   libraryName: string
-  targetEncoder: string
+  targetCodec: string
   state: JobState
   attemptNumber: number
   createdAt: string
@@ -25,7 +25,7 @@ export interface CompletedJob {
   libraryName: string
   encoderUsed: string
   crf: number
-  vmaf: number
+  vmafScore: number
   inputSizeBytes: number
   outputSizeBytes: number
   durationSec: number

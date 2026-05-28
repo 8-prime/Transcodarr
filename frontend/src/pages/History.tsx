@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { MonoText } from '@/components/common/MonoText'
 import { Badge } from '@/components/ui/badge'
@@ -9,9 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { fakeHistory } from '@/api/fakes/history'
-import { ENCODER_LABELS } from '@/types/node'
+import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import type { CompletedJob } from '@/types/job'
 
 const GB = 1024 ** 3
 
@@ -24,17 +25,22 @@ function vmafTone(v: number) {
 
 function formatDuration(sec: number) {
   const m = Math.floor(sec / 60)
-  const s = sec % 60
+  const s = Math.floor(sec % 60)
   return `${m}m ${s.toString().padStart(2, '0')}s`
 }
 
 export function HistoryPage() {
+  const { data: history = [] } = useQuery({
+    queryKey: ['history'],
+    queryFn: () => apiFetch<CompletedJob[]>('/history'),
+    refetchInterval: 10000,
+  })
+
   return (
     <div className="space-y-6">
       <PageHeader
-        kicker="Placeholder · backend not wired yet"
         title="History"
-        description="Completed transcode jobs with quality and size deltas. Connected to faked data for now."
+        description="Completed transcode jobs with quality and size deltas."
       />
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -50,7 +56,7 @@ export function HistoryPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {fakeHistory.map((job) => {
+            {history.map((job) => {
               const inputGB = job.inputSizeBytes / GB
               const outputGB = job.outputSizeBytes / GB
               const deltaPct = ((outputGB - inputGB) / inputGB) * 100
@@ -64,15 +70,15 @@ export function HistoryPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-mono text-[11px]">
-                      {ENCODER_LABELS[job.encoderUsed] ?? job.encoderUsed}
+                      {job.encoderUsed}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
                     {job.crf}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className={cn('font-mono text-sm font-medium', vmafTone(job.vmaf))}>
-                      {job.vmaf.toFixed(1)}
+                    <span className={cn('font-mono text-sm font-medium', vmafTone(job.vmafScore))}>
+                      {job.vmafScore.toFixed(1)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

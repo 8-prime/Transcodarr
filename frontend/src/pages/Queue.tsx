@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { MonoText } from '@/components/common/MonoText'
@@ -13,8 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { fakeQueue } from '@/api/fakes/queue'
-import { ENCODER_LABELS } from '@/types/node'
+import { apiFetch } from '@/lib/api'
 import type { JobState, TranscodeJob } from '@/types/job'
 
 const TABS: { key: JobState; label: string }[] = [
@@ -24,20 +24,25 @@ const TABS: { key: JobState; label: string }[] = [
 ]
 
 export function QueuePage() {
+  const { data: jobs = [] } = useQuery({
+    queryKey: ['queue'],
+    queryFn: () => apiFetch<TranscodeJob[]>('/queue'),
+    refetchInterval: 3000,
+  })
+
   const grouped = useMemo(() => {
     return {
-      Pending: fakeQueue.filter((j) => j.state === 'Pending'),
-      Assigned: fakeQueue.filter((j) => j.state === 'Assigned'),
-      Processing: fakeQueue.filter((j) => j.state === 'Processing'),
+      Pending: jobs.filter((j) => j.state === 'Pending'),
+      Assigned: jobs.filter((j) => j.state === 'Assigned'),
+      Processing: jobs.filter((j) => j.state === 'Processing'),
     } as Record<'Pending' | 'Assigned' | 'Processing', TranscodeJob[]>
-  }, [])
+  }, [jobs])
 
   return (
     <div className="space-y-6">
       <PageHeader
-        kicker="Placeholder · backend not wired yet"
         title="Queue"
-        description="Jobs waiting to run, recently assigned, and currently encoding. Connected to faked data for now."
+        description="Jobs waiting to run, recently assigned, and currently encoding."
       />
 
       <Tabs defaultValue="Processing" className="space-y-4">
@@ -89,7 +94,7 @@ function QueueTable({
           <TableRow className="hover:bg-transparent">
             <TableHead>File</TableHead>
             <TableHead className="w-[140px]">Library</TableHead>
-            <TableHead className="w-[160px]">Target</TableHead>
+            <TableHead className="w-[160px]">Codec</TableHead>
             {showNode && <TableHead className="w-[140px]">Node</TableHead>}
             {showProgress && (
               <TableHead className="w-[180px]">Progress</TableHead>
@@ -111,7 +116,7 @@ function QueueTable({
               </TableCell>
               <TableCell>
                 <Badge variant="secondary" className="font-mono text-[11px]">
-                  {ENCODER_LABELS[job.targetEncoder] ?? job.targetEncoder}
+                  {job.targetCodec}
                 </Badge>
               </TableCell>
               {showNode && (
@@ -153,7 +158,6 @@ function QueueTable({
 function stateToStatus(state: JobState) {
   switch (state) {
     case 'Pending':
-      return 'pending' as const
     case 'Assigned':
       return 'pending' as const
     case 'Processing':

@@ -1,4 +1,5 @@
 import { FolderTree, Plus } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { MonoText } from '@/components/common/MonoText'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -9,13 +10,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { fakeLibraries } from '@/api/fakes/libraries'
+import { apiFetch } from '@/lib/api'
+import type { Library } from '@/types/library'
 
 export function LibrariesPage() {
+  const { data: libraries = [] } = useQuery({
+    queryKey: ['libraries'],
+    queryFn: () => apiFetch<Library[]>('/libraries'),
+    refetchInterval: 10000,
+  })
+
   return (
     <div className="space-y-6">
       <PageHeader
-        kicker="Placeholder · backend not wired yet"
         title="Libraries"
         description="Configured media libraries. Files added here get scanned, probed, and queued for transcoding."
         actions={
@@ -28,13 +35,13 @@ export function LibrariesPage() {
                 </Button>
               </span>
             </TooltipTrigger>
-            <TooltipContent>Library endpoints not wired yet</TooltipContent>
+            <TooltipContent>Coming soon</TooltipContent>
           </Tooltip>
         }
       />
 
       <div className="grid gap-3 md:grid-cols-2">
-        {fakeLibraries.map((lib) => (
+        {libraries.map((lib) => (
           <div
             key={lib.id}
             className="group relative overflow-hidden rounded-lg border border-border bg-card p-4 transition-colors hover:border-[color-mix(in_oklab,var(--primary)_30%,var(--border))]"
@@ -83,14 +90,7 @@ export function LibrariesPage() {
 
             <div className="mt-3 flex items-center justify-between border-t border-border/70 pt-3">
               <span className="text-xs text-muted-foreground">Auto-watch</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Switch checked={lib.watching} disabled />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Not wired yet</TooltipContent>
-              </Tooltip>
+              <Switch checked={lib.watching} disabled />
             </div>
           </div>
         ))}

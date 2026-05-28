@@ -1,16 +1,18 @@
 export interface AppSettings {
-  videoCodec: 'libx265' | 'hevc_nvenc' | 'hevc_qsv'
-  audioCodec: 'libopus' | 'aac' | 'copy'
-  crf: number
+  videoCodec: 'H264' | 'H265' | 'Av1'
+  audioCodec: 'Aac' | 'Ac3' | 'Copy'
   preset:
-    | 'ultrafast'
-    | 'superfast'
-    | 'veryfast'
-    | 'faster'
-    | 'fast'
-    | 'medium'
-    | 'slow'
-    | 'slower'
-    | 'veryslow'
-  targetVmaf: number
+    | 'Ultrafast'
+    | 'Superfast'
+    | 'Veryfast'
+    | 'Faster'
+    | 'Fast'
+    | 'Medium'
+    | 'Slow'
+    | 'Slower'
+    | 'Veryslow'
+  crf: number
+  autoApplyTranscode: boolean
+  jobExpirationInMinutes: number
+  transcodeTempDirectory: string
 }

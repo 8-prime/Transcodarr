@@ -6,13 +6,14 @@ import {
   Activity,
   ArrowRight,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useConnections } from '@/hooks/useConnections'
 import { PageHeader } from '@/components/common/PageHeader'
 import { StatCard } from '@/components/common/StatCard'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { MonoText } from '@/components/common/MonoText'
-import { fakeQueue } from '@/api/fakes/queue'
-import { fakeHistory } from '@/api/fakes/history'
+import { apiFetch } from '@/lib/api'
+import type { TranscodeJob, CompletedJob } from '@/types/job'
 
 export function DashboardPage() {
   const { data: connections, isError } = useConnections()
@@ -20,18 +21,29 @@ export function DashboardPage() {
   const totalFreeSlots =
     connections?.reduce((sum, c) => sum + c.freeSlots, 0) ?? 0
 
-  const processing = fakeQueue.filter((j) => j.state === 'Processing')
-  const pending = fakeQueue.filter(
+  const { data: queue = [] } = useQuery({
+    queryKey: ['queue'],
+    queryFn: () => apiFetch<TranscodeJob[]>('/queue'),
+    refetchInterval: 3000,
+  })
+
+  const { data: history = [] } = useQuery({
+    queryKey: ['history'],
+    queryFn: () => apiFetch<CompletedJob[]>('/history'),
+    refetchInterval: 10000,
+  })
+
+  const processing = queue.filter((j) => j.state === 'Processing')
+  const pending = queue.filter(
     (j) => j.state === 'Pending' || j.state === 'Assigned',
   )
-  const completedToday = fakeHistory.length
 
   return (
     <div className="space-y-8">
       <PageHeader
         kicker="Overview"
         title="Dashboard"
-        description="A snapshot of the transcoding cluster. Node data is live; queue and history are placeholders until the backend exposes them."
+        description="A snapshot of the transcoding cluster."
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -49,21 +61,21 @@ export function DashboardPage() {
         <StatCard
           label="Processing"
           value={processing.length}
-          hint="active transcodes (fake)"
+          hint="active transcodes"
           icon={Activity}
           tone="accent"
         />
         <StatCard
           label="Queued"
           value={pending.length}
-          hint="pending + assigned (fake)"
+          hint="pending + assigned"
           icon={ListOrdered}
           tone="warn"
         />
         <StatCard
           label="Completed"
-          value={completedToday}
-          hint="last 24h (fake)"
+          value={history.length}
+          hint="all time"
           icon={CheckCircle2}
           tone="ok"
         />
@@ -86,7 +98,7 @@ export function DashboardPage() {
             </Link>
           </header>
           <ul className="divide-y divide-border/60">
-            {fakeHistory.slice(0, 5).map((job) => (
+            {history.slice(0, 5).map((job) => (
               <li
                 key={job.id}
                 className="flex items-center justify-between gap-4 px-5 py-3"
@@ -102,7 +114,7 @@ export function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <div className="font-mono text-sm text-foreground">
-                      {job.vmaf.toFixed(1)}
+                      {job.vmafScore.toFixed(1)}
                     </div>
                     <MonoText muted>VMAF</MonoText>
                   </div>
