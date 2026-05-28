@@ -9,23 +9,23 @@ public class TranscodeManager : BackgroundService
     private readonly ILogger<TranscodeManager> _logger;
     private readonly ConnectionManager _connectionManager;
     private readonly TranscodesQueue _transcodeRequests;
-    private readonly TranscodeService _transcodeService;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly SlotTracker _slotTracker;
     private readonly List<Task<TranscodeResponse>> _transcodeJos = [];
 
     public TranscodeManager(
         ConnectionManager connectionManager,
         TranscodesQueue queue,
+        IServiceScopeFactory serviceScopeFactory,
         ILogger<TranscodeManager> logger,
-        SlotTracker slotTracker,
-        TranscodeService transcodeService
+        SlotTracker slotTracker
     )
     {
         _connectionManager = connectionManager;
         _transcodeRequests = queue;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _slotTracker = slotTracker;
-        _transcodeService = transcodeService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -60,6 +60,8 @@ public class TranscodeManager : BackgroundService
             var request in _transcodeRequests.TranscodeRequests.Reader.ReadAllAsync(stoppingToken)
         )
         {
+            using var scope = _serviceScopeFactory.CreateScope();
+            var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodeService>();
             var firstFreeEncoder = _slotTracker.EncodersWithCapacity.FirstOrDefault();
             if (firstFreeEncoder == null || !_slotTracker.TryAcquire(firstFreeEncoder))
             {
@@ -71,7 +73,7 @@ public class TranscodeManager : BackgroundService
             }
 
             _transcodeJos.Add(
-                _transcodeService.RunTranscodeAsync(
+                transcodeService.RunTranscodeAsync(
                     request.JobLeaseId,
                     request.FilePath,
                     request.OutputPath,
