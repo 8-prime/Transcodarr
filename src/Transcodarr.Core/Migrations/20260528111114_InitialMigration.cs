@@ -56,8 +56,8 @@ namespace Transcodarr.Core.Migrations
                     LibraryId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
                     Path = table.Column<string>(type: "TEXT", maxLength: 4096, nullable: false),
-                    DiscoveredAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    FileModifiedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    DiscoveredAt = table.Column<long>(type: "INTEGER", nullable: false),
+                    FileModifiedAt = table.Column<long>(type: "INTEGER", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -126,9 +126,9 @@ namespace Transcodarr.Core.Migrations
                     EncoderPreset = table.Column<int>(type: "INTEGER", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
                     Progress = table.Column<double>(type: "REAL", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    LeaseExpiresAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    CompletedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<long>(type: "INTEGER", nullable: false),
+                    LeaseExpiresAt = table.Column<long>(type: "INTEGER", nullable: false),
+                    CompletedAt = table.Column<long>(type: "INTEGER", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -157,8 +157,8 @@ namespace Transcodarr.Core.Migrations
                     FileSizeBytes = table.Column<long>(type: "INTEGER", nullable: false),
                     VmafScore = table.Column<double>(type: "REAL", nullable: true),
                     ApprovalState = table.Column<int>(type: "INTEGER", nullable: false),
-                    CompletedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    ReviewedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    CompletedAt = table.Column<long>(type: "INTEGER", nullable: false),
+                    ReviewedAt = table.Column<long>(type: "INTEGER", nullable: true),
                 },
                 constraints: table =>
                 {

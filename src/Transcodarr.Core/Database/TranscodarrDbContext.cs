@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Transcodarr.Core.Database.Entities;
 
 namespace Transcodarr.Core.Database;
@@ -16,6 +17,26 @@ public class TranscodarrDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var properties = entityType
+                    .ClrType.GetProperties()
+                    .Where(p =>
+                        p.PropertyType == typeof(DateTimeOffset)
+                        || p.PropertyType == typeof(DateTimeOffset?)
+                    );
+                foreach (var property in properties)
+                {
+                    modelBuilder
+                        .Entity(entityType.Name)
+                        .Property(property.Name)
+                        .HasConversion(new DateTimeOffsetToBinaryConverter());
+                }
+            }
+        }
+
         modelBuilder
             .Entity<AppConfigurationEntity>()
             .Property(c => c.TranscodeTempDirectory)

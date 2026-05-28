@@ -3,6 +3,7 @@ using Transcodarr.Core.Common.Constants;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
+using Transcodarr.Core.Services.Configuration;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services.Jobs;
@@ -12,18 +13,21 @@ public class JobQueueManagerService : BackgroundService
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ConnectionManager _connections;
     private readonly WebSocketConnectionService _webSocketConnectionService;
+    private readonly ConfigurationService _configurationService;
     private readonly ILogger<JobQueueManagerService> _logger;
 
     public JobQueueManagerService(
         IServiceScopeFactory serviceScopeFactory,
         ConnectionManager connections,
         WebSocketConnectionService webSocketConnectionService,
+        ConfigurationService configurationService,
         ILogger<JobQueueManagerService> logger
     )
     {
         _serviceScopeFactory = serviceScopeFactory;
         _connections = connections;
         _webSocketConnectionService = webSocketConnectionService;
+        _configurationService = configurationService;
         _logger = logger;
     }
 
@@ -35,20 +39,16 @@ public class JobQueueManagerService : BackgroundService
 
             await using var scope = _serviceScopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
-            var config = await dbContext.AppConfigurations.FirstOrDefaultAsync(
-                cancellationToken: stoppingToken
-            );
-            if (config == null)
+            if (!_configurationService.Initialized)
             {
                 continue;
             }
 
             var freeSlots = _connections.GetTotalFreeSlots();
-
+            var now = DateTimeOffset.UtcNow;
             var timedOutJobs = await dbContext
                 .TranscodeJobs.Where(j =>
-                    j.LeaseExpiresAt <= DateTimeOffset.UtcNow
-                    && j.Status == TranscodeJobStatus.Active
+                    j.LeaseExpiresAt <= now && j.Status == TranscodeJobStatus.Active
                 )
                 .ExecuteUpdateAsync(
                     setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.TimedOut),
@@ -72,7 +72,12 @@ public class JobQueueManagerService : BackgroundService
 
             foreach (var pendingRequest in pendingJobs)
             {
-                await CreateJob(dbContext, pendingRequest, config, stoppingToken);
+                await CreateJob(
+                    dbContext,
+                    pendingRequest,
+                    _configurationService.Current,
+                    stoppingToken
+                );
                 freeSlots--;
             }
 

@@ -75,11 +75,11 @@ namespace Transcodarr.Core.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("DiscoveredAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("DiscoveredAt")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("FileModifiedAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("FileModifiedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("LibraryId")
                         .HasColumnType("TEXT");
@@ -155,20 +155,20 @@ namespace Transcodarr.Core.Migrations
                     b.Property<int>("AudioCodec")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("CompletedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ConstantRateFactor")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("EncoderPreset")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("LeaseExpiresAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("LeaseExpiresAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("MediaFileId")
                         .HasColumnType("TEXT");
@@ -210,8 +210,8 @@ namespace Transcodarr.Core.Migrations
                     b.Property<int>("ApprovalState")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("CompletedAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("CompletedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("EncoderName")
                         .IsRequired()
@@ -221,8 +221,8 @@ namespace Transcodarr.Core.Migrations
                     b.Property<long>("FileSizeBytes")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("ReviewedAt")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("ReviewedAt")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("TranscodeJobId")
                         .HasColumnType("TEXT");
