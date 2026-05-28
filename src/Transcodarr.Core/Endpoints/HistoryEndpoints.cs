@@ -34,12 +34,12 @@ public static class HistoryEndpoints
                     ApprovalState = r.ApprovalState,
                     CompletedAt = r.CompletedAt,
                     Crf = r.TranscodeJob.ConstantRateFactor,
-                    Duration = r.TranscodeJob.MediaFile.Metadata!.Duration,
+                    DurationSec = r.TranscodeJob.MediaFile.Metadata!.Duration.TotalSeconds,
                     EncoderUsed = r.EncoderName,
                     InputSizeBytes = r.TranscodeJob.MediaFile.Metadata!.FileSizeBytes,
                     OutputSizeBytes = r.FileSizeBytes,
                     VideoCodec = r.TranscodeJob.VideoCodec,
-                    VmafScore = r.VmafScore,
+                    VmafScore = r.VmafScore ?? 0,
                 })
                 .ToListAsync(stoppingToken)
         );

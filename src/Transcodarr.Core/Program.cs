@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Endpoints;
@@ -8,6 +9,10 @@ using Transcodarr.Core.Services.Jobs;
 using Transcodarr.Core.Services.MediaFiles;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.ConfigureHttpJsonOptions(opts =>
+    opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter())
+);
 
 builder.Services.AddDbContextFactory<TranscodarrDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("TranscodarrDb"))

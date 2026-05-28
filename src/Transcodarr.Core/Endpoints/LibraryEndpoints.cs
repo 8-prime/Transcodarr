@@ -30,7 +30,7 @@ public static class LibraryEndpoints
             {
                 Id = l.Id,
                 Path = l.FileSystemPath,
-                DisplayName = l.DisplayName,
+                Name = l.DisplayName ?? l.FileSystemPath,
                 FileCount = dbContext.MediaFiles.Count(f => f.LibraryId == l.Id),
                 Watching = true,
             })

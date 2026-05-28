@@ -32,8 +32,8 @@ public static class SettingsEndpoints
                 AudioCodec = internalConfig.TranscodeAudioCodec,
                 VideoCodec = internalConfig.TranscodeVideoCodec,
                 AutoApplyTranscode = internalConfig.AutoApplyTranscode,
-                ConstantRateFactor = internalConfig.ConstantRateFactor,
-                EncoderPreset = internalConfig.TranscodeEncoderPreset,
+                Crf = internalConfig.ConstantRateFactor,
+                Preset = internalConfig.TranscodeEncoderPreset,
                 JobExpirationInMinutes = internalConfig.JobExpirationInMinutes,
                 TranscodeTempDirectory = internalConfig.TranscodeTempDirectory,
             }
@@ -54,8 +54,8 @@ public static class SettingsEndpoints
                 c.TranscodeAudioCodec = updateAppSettingsRequest.AudioCodec;
                 c.TranscodeVideoCodec = updateAppSettingsRequest.VideoCodec;
                 c.AutoApplyTranscode = updateAppSettingsRequest.AutoApplyTranscode;
-                c.ConstantRateFactor = updateAppSettingsRequest.ConstantRateFactor;
-                c.TranscodeEncoderPreset = updateAppSettingsRequest.EncoderPreset;
+                c.ConstantRateFactor = updateAppSettingsRequest.Crf;
+                c.TranscodeEncoderPreset = updateAppSettingsRequest.Preset;
                 c.JobExpirationInMinutes = updateAppSettingsRequest.JobExpirationInMinutes;
                 c.TranscodeTempDirectory = updateAppSettingsRequest.TranscodeTempDirectory;
             },
@@ -69,8 +69,8 @@ public static class SettingsEndpoints
                 AudioCodec = internalConfig.TranscodeAudioCodec,
                 VideoCodec = internalConfig.TranscodeVideoCodec,
                 AutoApplyTranscode = internalConfig.AutoApplyTranscode,
-                ConstantRateFactor = internalConfig.ConstantRateFactor,
-                EncoderPreset = internalConfig.TranscodeEncoderPreset,
+                Crf = internalConfig.ConstantRateFactor,
+                Preset = internalConfig.TranscodeEncoderPreset,
                 JobExpirationInMinutes = internalConfig.JobExpirationInMinutes,
                 TranscodeTempDirectory = internalConfig.TranscodeTempDirectory,
             }

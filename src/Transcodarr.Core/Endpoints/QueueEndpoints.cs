@@ -28,12 +28,13 @@ public static class QueueEndpoints
                     Id = j.Id,
                     CreatedAt = j.CreatedAt,
                     FileName = j.MediaFile.Path,
-                    LeaseExpiresAt = j.LeaseExpiresAt,
                     LibraryName =
                         j.MediaFile.Library.DisplayName ?? j.MediaFile.Library.FileSystemPath,
                     NodeId = j.NodeId,
-                    Progress = j.Progress,
-                    Status = j.Status,
+                    ProgressPct = j.Progress,
+                    State = j.Status.ToString(),
+                    AttemptNumber = dbContext.TranscodeJobs.Count(jobs => jobs.MediaFileId == j.MediaFileId),
+                    TargetCodec = j.VideoCodec.ToString()
                 })
                 .ToListAsync(stoppingToken)
         );
