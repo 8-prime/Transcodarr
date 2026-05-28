@@ -1,5 +1,6 @@
 ﻿using FFMpegCore;
 using FFMpegCore.Exceptions;
+using Transcodarr.Node.Common.Models;
 using Transcodarr.Shared;
 
 namespace Transcodarr.Node.Services.NodeState;
@@ -16,23 +17,27 @@ public class CapabilitiesService(ILogger<CapabilitiesService> logger)
 
     public async Task<List<EncoderCapability>> GetEncodersAsync(CancellationToken stoppingToken)
     {
-        var capabilities = new List<EncoderCapability>(_defaultEncoderSlots.Count);
-        foreach (var possibleEncoder in _defaultEncoderSlots.Keys)
+        var capabilities = new List<EncoderCapability>();
+        foreach (var kvp in TranscodersMapping.EncodersByCodec)
         {
-            if (!await IsEncoderAvailableAsync(possibleEncoder))
+            foreach (var possibleEncoder in kvp.Value)
             {
-                continue;
-            }
-
-            stoppingToken.ThrowIfCancellationRequested();
-
-            capabilities.Add(
-                new EncoderCapability
+                if (!await IsEncoderAvailableAsync(possibleEncoder))
                 {
-                    EncoderName = possibleEncoder,
-                    Slots = _defaultEncoderSlots.GetValueOrDefault(possibleEncoder, 1),
+                    continue;
                 }
-            );
+
+                stoppingToken.ThrowIfCancellationRequested();
+
+                capabilities.Add(
+                    new EncoderCapability
+                    {
+                        EncoderName = possibleEncoder,
+                        CodecType = kvp.Key,
+                        Slots = _defaultEncoderSlots.GetValueOrDefault(possibleEncoder, 1),
+                    }
+                );
+            }
         }
 
         return capabilities;
@@ -45,17 +50,14 @@ public class CapabilitiesService(ILogger<CapabilitiesService> logger)
         {
             return await FFMpegArguments
                 .FromFileInput(
-                    "color=c=black:s=1920x1080:r=1:d=1",
+                    "color=c=black:s=320x240:r=30:d=1",
                     false,
                     o => o.ForceFormat("lavfi")
                 )
                 .OutputToFile(
                     nullSink,
                     true,
-                    o =>
-                        o.WithVideoCodec(encoderName)
-                            .WithCustomArgument("-vframes 1")
-                            .ForceFormat("null")
+                    o => o.WithVideoCodec(encoderName).ForceFormat("null")
                 )
                 .ProcessAsynchronously();
         }

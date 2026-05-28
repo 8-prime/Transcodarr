@@ -1,4 +1,5 @@
-﻿using Transcodarr.Node.Services.Connection;
+﻿using Transcodarr.Node.Common.Models;
+using Transcodarr.Node.Services.Connection;
 using Transcodarr.Node.Services.NodeState;
 using Transcodarr.Shared.DTOs;
 
@@ -62,7 +63,9 @@ public class TranscodeManager : BackgroundService
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodeService>();
-            var firstFreeEncoder = _slotTracker.EncodersWithCapacity.FirstOrDefault();
+            var firstFreeEncoder = _slotTracker.EncodersWithCapacity.FirstOrDefault(e =>
+                TranscodersMapping.EncoderMatchesCodec(e, request.QualitySettings.DesiredVideoCodec)
+            );
             if (firstFreeEncoder == null || !_slotTracker.TryAcquire(firstFreeEncoder))
             {
                 await _connectionManager.SendAsync(

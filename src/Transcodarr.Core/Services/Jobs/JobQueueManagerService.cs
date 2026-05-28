@@ -121,7 +121,7 @@ public class JobQueueManagerService : BackgroundService
         CancellationToken stoppingToken
     )
     {
-        var conn = _connections.GetConnections().FirstOrDefault(c => c.FreeSlots > 0);
+        var conn = _connections.GetConnections().FirstOrDefault(c => c.FreeSlots > 0 && c.NodeInfo is not null && c.NodeInfo.EncoderCapabilities.Any(e => e.CodecType == config.TranscodeVideoCodec));
         if (conn is null)
         {
             _logger.LogWarning("No node with free slots found while creating job");
