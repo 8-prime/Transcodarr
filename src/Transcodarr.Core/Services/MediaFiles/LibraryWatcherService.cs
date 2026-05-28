@@ -164,7 +164,7 @@ public class LibraryWatcherService : BackgroundService
         }
 
         var libraryService = scope.ServiceProvider.GetRequiredService<LibraryService>();
-        await libraryService.AddNewFile(fileSystemEventArgs.FullPath, libraryId, stoppingToken);
+        libraryService.AddNewFile(fileSystemEventArgs.FullPath, libraryId);
     }
 
     private static async Task HandleFileChanged(
@@ -226,11 +226,7 @@ public class LibraryWatcherService : BackgroundService
         }
 
         var libraryService = scope.ServiceProvider.GetRequiredService<LibraryService>();
-        await libraryService.AddNewFile(
-            fileSystemEventArgs.FullPath,
-            libraryId.Value,
-            stoppingToken
-        );
+        libraryService.AddNewFile(fileSystemEventArgs.FullPath, libraryId.Value);
     }
 
     private Guid? GetLibraryIdForPath(string filePath)
@@ -270,6 +266,7 @@ public class LibraryWatcherService : BackgroundService
         }
 
         var fsWatcher = new FileSystemWatcher(fileSystemPath);
+        fsWatcher.IncludeSubdirectories = true;
         fsWatcher.Changed += OnFileSystemWatcherEvent;
         fsWatcher.Created += OnFileSystemWatcherEvent;
         fsWatcher.Deleted += OnFileSystemWatcherEvent;

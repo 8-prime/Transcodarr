@@ -9,17 +9,11 @@ namespace Transcodarr.Core.Services.MediaFiles;
 public class LibraryService
 {
     private readonly TranscodarrDbContext _dbContext;
-    private readonly FileProbeService _fileProbeService;
     private readonly ILogger<LibraryService> _logger;
 
-    public LibraryService(
-        TranscodarrDbContext dbContext,
-        FileProbeService fileProbeService,
-        ILogger<LibraryService> logger
-    )
+    public LibraryService(TranscodarrDbContext dbContext, ILogger<LibraryService> logger)
     {
         _dbContext = dbContext;
-        _fileProbeService = fileProbeService;
         _logger = logger;
     }
 
@@ -49,7 +43,7 @@ public class LibraryService
             if (!knownFiles.Remove(file, out var libraryScanInfo))
             {
                 _logger.LogInformation("Discovered new file {FilePath}", file);
-                await AddNewFile(file, libraryId, stoppingToken);
+                AddNewFile(file, libraryId);
                 newCount++;
                 continue;
             }
@@ -71,9 +65,10 @@ public class LibraryService
             _logger.LogInformation("File changed, re-probing {FilePath}", file);
             mediaFile.Metadata = null;
             mediaFile.Status = TranscodeStatus.Discovered;
-            await _fileProbeService.ProbeFileAsync(file, mediaFile.Id, stoppingToken);
             changedCount++;
         }
+
+        await _dbContext.SaveChangesAsync(stoppingToken);
 
         _logger.LogInformation(
             "Library scan complete for {LibraryPath}: {NewCount} new, {ChangedCount} changed",
@@ -83,7 +78,7 @@ public class LibraryService
         );
     }
 
-    public async Task AddNewFile(string file, Guid libraryId, CancellationToken stoppingToken)
+    public void AddNewFile(string file, Guid libraryId)
     {
         var fi = new FileInfo(file);
         var newFileInfo = new MediaFileEntity
@@ -96,7 +91,5 @@ public class LibraryService
             LibraryId = libraryId,
         };
         _dbContext.MediaFiles.Add(newFileInfo);
-
-        await _fileProbeService.ProbeFileAsync(file, newFileInfo.Id, stoppingToken);
     }
 }
