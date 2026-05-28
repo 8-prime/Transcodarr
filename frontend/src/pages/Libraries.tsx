@@ -1,23 +1,48 @@
 import { FolderTree, Plus } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { MonoText } from '@/components/common/MonoText'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { apiFetch } from '@/lib/api'
 import type { Library } from '@/types/library'
 
 export function LibrariesPage() {
+  const queryClient = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [path, setPath] = useState('')
+  const [displayName, setDisplayName] = useState('')
+
   const { data: libraries = [] } = useQuery({
     queryKey: ['libraries'],
     queryFn: () => apiFetch<Library[]>('/libraries'),
     refetchInterval: 10000,
+  })
+
+  const { mutate: addLibrary, isPending } = useMutation({
+    mutationFn: () =>
+      apiFetch<void>('/libraries', {
+        method: 'POST',
+        body: JSON.stringify({ path, displayName: displayName || undefined }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraries'] })
+      setOpen(false)
+      setPath('')
+      setDisplayName('')
+    },
   })
 
   return (
@@ -26,17 +51,51 @@ export function LibrariesPage() {
         title="Libraries"
         description="Configured media libraries. Files added here get scanned, probed, and queued for transcoding."
         actions={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button size="sm" disabled>
-                  <Plus className="h-3.5 w-3.5" />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-3.5 w-3.5" />
+                Add library
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Add library</SheetTitle>
+                <SheetDescription>
+                  Point to a directory on disk. Files will be scanned and queued for transcoding.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 px-4 py-6">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">Path</span>
+                  <Input
+                    placeholder="/mnt/media/movies"
+                    value={path}
+                    onChange={(e) => setPath(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">Display name <span className="font-normal text-muted-foreground">(optional)</span></span>
+                  <Input
+                    placeholder="Movies"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <SheetFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => addLibrary()}
+                  disabled={!path.trim() || isPending}
+                >
                   Add library
                 </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Coming soon</TooltipContent>
-          </Tooltip>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         }
       />
 
