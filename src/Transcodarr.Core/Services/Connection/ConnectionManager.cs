@@ -2,12 +2,19 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using Transcodarr.Core.Common.Models;
+using Transcodarr.Core.Services.MediaFiles;
 
 namespace Transcodarr.Core.Services;
 
 public class ConnectionManager
 {
     private readonly ConcurrentDictionary<string, NodeConnectionInfo> _connections = [];
+    private readonly ProbeManagerService _probeManager;
+
+    public ConnectionManager(ProbeManagerService probeManager)
+    {
+        _probeManager = probeManager;
+    }
 
     public NodeConnectionInfo AddConnection(WebSocket socket, string nodeId)
     {
@@ -19,6 +26,7 @@ public class ConnectionManager
     public void CloseConnection(string nodeId)
     {
         _connections.TryRemove(nodeId, out _);
+        _probeManager.ClearNode(nodeId);
     }
 
     public ICollection<NodeConnectionInfo> GetConnections()

@@ -13,17 +13,20 @@ public partial class MessageHandler
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ConfigurationService _configurationService;
+    private readonly ProbeManagerService _probeManager;
     private readonly ILogger<MessageHandler> _logger;
 
     public MessageHandler(
         IServiceScopeFactory serviceScopeFactory,
         ILogger<MessageHandler> logger,
-        ConfigurationService configurationService
+        ConfigurationService configurationService,
+        ProbeManagerService probeManager
     )
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _configurationService = configurationService;
+        _probeManager = probeManager;
     }
 
     public async Task ProcessMessageAsync(
@@ -36,6 +39,7 @@ public partial class MessageHandler
         {
             case NodeInfoMessage nodeInfoMessage:
                 nodeConnectionInfo.NodeInfo = nodeInfoMessage.Info;
+                await DispatchDiscoveredProbesAsync(cancellationToken);
                 break;
             case TranscodeResponse transcodeResponse:
                 await HandleTranscodeResponse(transcodeResponse, cancellationToken);
@@ -62,6 +66,8 @@ public partial class MessageHandler
         CancellationToken cancellationToken
     )
     {
+        _probeManager.Complete(probeResponse.MediaFileId);
+
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
         var file = await context.MediaFiles.FirstOrDefaultAsync(
@@ -211,6 +217,28 @@ public partial class MessageHandler
         }
 
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task DispatchDiscoveredProbesAsync(CancellationToken cancellationToken)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
+        var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
+
+        var discoveredFiles = await context
+            .MediaFiles.Where(f => f.Status == TranscodeStatus.Discovered)
+            .ToListAsync(cancellationToken);
+
+        if (discoveredFiles.Count == 0)
+            return;
+
+        _logger.LogInformation(
+            "Node connected, dispatching probes for {Count} discovered files",
+            discoveredFiles.Count
+        );
+
+        foreach (var file in discoveredFiles)
+            await fileProbeService.ProbeFileAsync(file.Path, file.Id, cancellationToken);
     }
 
     [LoggerMessage(LogLevel.Debug, "Received heartbeat from {nodeId}")]

@@ -4,6 +4,7 @@ using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
 using Transcodarr.Core.Services.Configuration;
+using Transcodarr.Core.Services.MediaFiles;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services.Jobs;
@@ -56,6 +57,20 @@ public class JobQueueManagerService : BackgroundService
                 );
             if (timedOutJobs > 0)
                 _logger.LogInformation("Marked {TimedOutJobCount} jobs as timed out", timedOutJobs);
+
+            var discoveredFiles = await dbContext
+                .MediaFiles.Where(f => f.Status == TranscodeStatus.Discovered)
+                .ToListAsync(stoppingToken);
+            if (discoveredFiles.Count > 0)
+            {
+                var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
+                _logger.LogInformation(
+                    "Retrying probes for {Count} discovered files",
+                    discoveredFiles.Count
+                );
+                foreach (var file in discoveredFiles)
+                    await fileProbeService.ProbeFileAsync(file.Path, file.Id, stoppingToken);
+            }
 
             if (freeSlots == 0)
             {
