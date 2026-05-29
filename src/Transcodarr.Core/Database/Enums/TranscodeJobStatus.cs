@@ -2,8 +2,8 @@
 
 public enum TranscodeJobStatus
 {
-    Active,
+    Processing,
     Completed,
-    TimedOut,
+    LeaseExpired,
     Failed,
 }

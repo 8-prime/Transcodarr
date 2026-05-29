@@ -51,10 +51,10 @@ public class JobQueueManagerService : BackgroundService
             var now = DateTimeOffset.UtcNow;
             var timedOutJobs = await dbContext
                 .TranscodeJobs.Where(j =>
-                    j.LeaseExpiresAt <= now && j.Status == TranscodeJobStatus.Active
+                    j.LeaseExpiresAt <= now && j.Status == TranscodeJobStatus.Processing
                 )
                 .ExecuteUpdateAsync(
-                    setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.TimedOut),
+                    setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.LeaseExpired),
                     stoppingToken
                 );
             if (timedOutJobs > 0)
@@ -90,9 +90,10 @@ public class JobQueueManagerService : BackgroundService
                     file.Status == TranscodeStatus.Pending
                     && (
                         file.Jobs.Count == 0
-                        || file.Jobs.All(job => job.Status != TranscodeJobStatus.Active)
+                        || file.Jobs.All(job => job.Status != TranscodeJobStatus.Processing)
                     )
                 )
+                .OrderBy(file => file.DiscoveredAt)
                 .Take(freeSlots)
                 .ToListAsync(cancellationToken: stoppingToken);
 
@@ -161,8 +162,8 @@ public class JobQueueManagerService : BackgroundService
             Id = Guid.NewGuid(),
             NodeId = conn.ConnectionId,
             OutputPath = outputPath,
-            MediaFile = pendingFile,
-            Status = TranscodeJobStatus.Active,
+            MediaFileId = pendingFile.Id,
+            Status = TranscodeJobStatus.Processing,
             CreatedAt = DateTimeOffset.UtcNow,
             LeaseExpiresAt = DateTimeOffset.UtcNow.AddMinutes(config.JobExpirationInMinutes),
             AudioCodec = config.TranscodeAudioCodec,
