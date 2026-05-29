@@ -45,7 +45,9 @@ public class JobQueueManagerService : BackgroundService
                 continue;
             }
 
-            var freeSlots = _connections.GetTotalFreeSlots();
+            var freeSlots = _connections.GetFreeSlotsForCodec(
+                _configurationService.Current.TranscodeVideoCodec
+            );
             var now = DateTimeOffset.UtcNow;
             var timedOutJobs = await dbContext
                 .TranscodeJobs.Where(j =>
@@ -121,18 +123,12 @@ public class JobQueueManagerService : BackgroundService
         CancellationToken stoppingToken
     )
     {
-        var conn = _connections
-            .GetConnections()
-            .FirstOrDefault(c =>
-                c.FreeSlots > 0
-                && c.NodeInfo is not null
-                && c.NodeInfo.EncoderCapabilities.Any(e =>
-                    e.CodecType == config.TranscodeVideoCodec
-                )
-            );
-        if (conn is null)
+        if (!_connections.TryGetConnectionForCodec(config.TranscodeVideoCodec, out var connection))
         {
-            _logger.LogWarning("No node with free slots found while creating job");
+            _logger.LogWarning(
+                "No node with a free encoder for {Codec} found while creating job",
+                config.TranscodeVideoCodec
+            );
             return;
         }
 
@@ -145,10 +141,13 @@ public class JobQueueManagerService : BackgroundService
             return;
         }
 
+        var (conn, encoder) = connection.Value;
+
         _logger.LogInformation(
-            "Creating transcode job for {FilePath} on node {NodeId}",
+            "Creating transcode job for {FilePath} on node {NodeId} using encoder {Encoder}",
             pendingFile.Path,
-            conn.ConnectionId
+            conn.ConnectionId,
+            encoder.EncoderName
         );
 
         var fileInfo = new FileInfo(pendingFile.Path);
@@ -185,13 +184,14 @@ public class JobQueueManagerService : BackgroundService
                 DesiredAudioCodec = config.TranscodeAudioCodec,
                 DesiredVideoCodec = config.TranscodeVideoCodec,
                 DesiredEncoderPreset = config.TranscodeEncoderPreset,
-            }
+            },
+            encoder.EncoderName
         )
         {
             CorrelationId = Guid.NewGuid(),
         };
         await _webSocketConnectionService.SendFireAndForgetAsync(request, conn, stoppingToken);
 
-        conn.FreeSlots--;
+        conn.FreeSlotsByGroup[encoder.SlotGroup]--;
     }
 }

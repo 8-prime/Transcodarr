@@ -32,12 +32,13 @@ public record TranscodeRequest(
     string OutputPath,
     Guid JobLeaseId,
     TimeSpan TotalDuration,
-    TranscodeQualitySettings QualitySettings
+    TranscodeQualitySettings QualitySettings,
+    string SpecificEncoder
 ) : SocketMessage;
 
 public record TranscodeRejection(Guid JobLeaseId) : SocketMessage;
 
-public record IncrementSlotsMessage : SocketMessage;
+public record IncrementSlotsMessage(string EncoderName) : SocketMessage;
 
 public record TranscodeResponse(
     Guid TranscodeJobId,

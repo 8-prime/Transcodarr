@@ -1,8 +1,9 @@
-﻿namespace Transcodarr.Shared;
+namespace Transcodarr.Shared;
 
 public class NodeInfo
 {
     public required string Name { get; init; }
     public IReadOnlyCollection<EncoderCapability> EncoderCapabilities { get; init; } = [];
-    public int Slots { get; set; }
+    public IReadOnlyDictionary<string, int> SlotGroupCapacities { get; init; } =
+        new Dictionary<string, int>();
 }

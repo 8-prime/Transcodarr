@@ -1,4 +1,4 @@
-﻿using Transcodarr.Shared;
+using Transcodarr.Shared;
 
 namespace Transcodarr.Node.Services.NodeState;
 
@@ -11,11 +11,11 @@ public partial class NodeLifecycleManager(
 {
     public async Task StartingAsync(CancellationToken ct)
     {
-        var encoderCapabilities = await capabilities.GetEncodersAsync(ct);
-        LogStartingWithEncoders(logger, encoderCapabilities);
-        slotTracker.Initialize(encoderCapabilities);
+        var (encoders, groupCapacities) = await capabilities.GetEncodersAsync(ct);
+        LogStartingWithEncoders(logger, encoders);
+        slotTracker.Initialize(encoders, groupCapacities);
         logger.LogInformation("Initialized transcode slot tracker");
-        nodeInfoManager.Initialize(encoderCapabilities);
+        nodeInfoManager.Initialize(encoders, groupCapacities);
         logger.LogInformation("Initialized transcode capabilities");
     }
 

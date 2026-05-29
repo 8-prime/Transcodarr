@@ -1,4 +1,4 @@
-﻿using FFMpegCore;
+using FFMpegCore;
 using FFMpegCore.Exceptions;
 using Transcodarr.Node.Common.Models;
 using Transcodarr.Shared;
@@ -7,40 +7,46 @@ namespace Transcodarr.Node.Services.NodeState;
 
 public class CapabilitiesService(ILogger<CapabilitiesService> logger)
 {
-    private readonly Dictionary<string, int> _defaultEncoderSlots = new()
+    private readonly Dictionary<string, int> _slotsByGroup = new()
     {
-        { "libx265", 1 },
-        { "hevc_nvenc", 2 },
-        { "hevc_amf", 1 },
-        { "hevc_qsv", 1 },
+        { "software", 1 },
+        { "nvenc", 2 },
+        { "amf", 1 },
+        { "qsv", 1 },
     };
 
-    public async Task<List<EncoderCapability>> GetEncodersAsync(CancellationToken stoppingToken)
+    public async Task<(
+        List<EncoderCapability> Encoders,
+        Dictionary<string, int> GroupCapacities
+    )> GetEncodersAsync(CancellationToken stoppingToken)
     {
-        var capabilities = new List<EncoderCapability>();
+        var encoders = new List<EncoderCapability>();
         foreach (var kvp in TranscodersMapping.EncodersByCodec)
         {
             foreach (var possibleEncoder in kvp.Value)
             {
                 if (!await IsEncoderAvailableAsync(possibleEncoder))
-                {
                     continue;
-                }
 
                 stoppingToken.ThrowIfCancellationRequested();
 
-                capabilities.Add(
+                encoders.Add(
                     new EncoderCapability
                     {
                         EncoderName = possibleEncoder,
                         CodecType = kvp.Key,
-                        Slots = _defaultEncoderSlots.GetValueOrDefault(possibleEncoder, 1),
+                        SlotGroup = TranscodersMapping.GetSlotGroup(possibleEncoder),
                     }
                 );
             }
         }
 
-        return capabilities;
+        var groupCapacities = encoders
+            .Select(e => e.SlotGroup)
+            .Distinct()
+            .ToDictionary(g => g, g => _slotsByGroup.GetValueOrDefault(g, 1));
+
+        return (encoders, groupCapacities);
     }
 
     private async Task<bool> IsEncoderAvailableAsync(string encoderName)

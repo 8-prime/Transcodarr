@@ -1,8 +1,11 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
+using System.Text;
 using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Services.MediaFiles;
+using Transcodarr.Shared;
+using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Core.Services;
 
@@ -42,8 +45,46 @@ public class ConnectionManager
         return _connections.TryGetValue(nodeId, out connection);
     }
 
-    public int GetTotalFreeSlots()
+    public bool TryGetConnectionForCodec(
+        VideoCodec codec,
+        [NotNullWhen(true)] out (NodeConnectionInfo, EncoderCapability)? connection
+    )
     {
-        return _connections.Values.Sum(x => x.FreeSlots);
+        foreach (var nodeConnectionInfo in _connections.Values)
+        {
+            if (nodeConnectionInfo.NodeInfo is not { } nodeInfo)
+            {
+                continue;
+            }
+
+            var matchingEncoders = nodeInfo.EncoderCapabilities.Where(e => e.CodecType == codec);
+            foreach (var encoder in matchingEncoders)
+            {
+                if (nodeInfo.SlotGroupCapacities.GetValueOrDefault(encoder.SlotGroup) <= 0)
+                {
+                    continue;
+                }
+
+                connection = (nodeConnectionInfo, encoder);
+                return true;
+            }
+        }
+
+        connection = null;
+        return false;
+    }
+
+    public int GetFreeSlotsForCodec(VideoCodec codec)
+    {
+        var total = 0;
+        foreach (var nodeInfo in _connections.Values.Select(n => n.NodeInfo).OfType<NodeInfo>())
+        {
+            var matchingEncoders = nodeInfo
+                .EncoderCapabilities.Where(e => e.CodecType == codec)
+                .Select(e => e.SlotGroup);
+            total += matchingEncoders.Sum(e => nodeInfo.SlotGroupCapacities.GetValueOrDefault(e));
+        }
+
+        return total;
     }
 }

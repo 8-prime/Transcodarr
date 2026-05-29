@@ -71,7 +71,7 @@ public class WebsocketConnectionService : BackgroundService
                 {
                     Name = _configuration.NodeId,
                     EncoderCapabilities = _nodeInfoManager.Capabilities,
-                    Slots = _slotTracker.AvailableSlots,
+                    SlotGroupCapacities = _nodeInfoManager.GroupCapacities,
                 }
             )
             {

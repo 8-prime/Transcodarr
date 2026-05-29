@@ -12,7 +12,7 @@ public class TranscodeManager : BackgroundService
     private readonly TranscodesQueue _transcodeRequests;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly SlotTracker _slotTracker;
-    private readonly List<Task<TranscodeResponse>> _transcodeJos = [];
+    private readonly List<Task<TranscodeResponse>> _transcodeJobs = [];
 
     public TranscodeManager(
         ConnectionManager connectionManager,
@@ -38,20 +38,21 @@ public class TranscodeManager : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_transcodeJos.Count == 0)
+            if (_transcodeJobs.Count == 0)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 continue;
             }
 
-            var completed = await Task.WhenAny(_transcodeJos);
+            var completed = await Task.WhenAny(_transcodeJobs);
+            var encoderName = completed.Result.EncoderSettingsSnapshot.EncoderName;
             await _connectionManager.SendAsync(completed.Result, stoppingToken);
             await _connectionManager.SendAsync(
-                new IncrementSlotsMessage { CorrelationId = Guid.NewGuid() },
+                new IncrementSlotsMessage(encoderName) { CorrelationId = Guid.NewGuid() },
                 stoppingToken
             );
-            _transcodeJos.Remove(completed);
-            _slotTracker.Release(completed.Result.EncoderSettingsSnapshot.EncoderName);
+            _transcodeJobs.Remove(completed);
+            _slotTracker.Release(encoderName);
         }
     }
 
@@ -63,10 +64,7 @@ public class TranscodeManager : BackgroundService
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodeService>();
-            var firstFreeEncoder = _slotTracker.EncodersWithCapacity.FirstOrDefault(e =>
-                TranscodersMapping.EncoderMatchesCodec(e, request.QualitySettings.DesiredVideoCodec)
-            );
-            if (firstFreeEncoder == null || !_slotTracker.TryAcquire(firstFreeEncoder))
+            if (!_slotTracker.TryAcquire(request.SpecificEncoder))
             {
                 await _connectionManager.SendAsync(
                     new TranscodeRejection(request.JobLeaseId) { CorrelationId = Guid.NewGuid() },
@@ -75,14 +73,14 @@ public class TranscodeManager : BackgroundService
                 continue;
             }
 
-            _transcodeJos.Add(
+            _transcodeJobs.Add(
                 transcodeService.RunTranscodeAsync(
                     request.JobLeaseId,
                     request.FilePath,
                     request.OutputPath,
                     request.TotalDuration,
                     request.QualitySettings,
-                    firstFreeEncoder,
+                    request.SpecificEncoder,
                     stoppingToken
                 )
             );

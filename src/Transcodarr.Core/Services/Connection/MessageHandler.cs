@@ -39,6 +39,11 @@ public partial class MessageHandler
         {
             case NodeInfoMessage nodeInfoMessage:
                 nodeConnectionInfo.NodeInfo = nodeInfoMessage.Info;
+                nodeConnectionInfo.FreeSlotsByGroup =
+                    nodeInfoMessage.Info.SlotGroupCapacities.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value
+                    );
                 await DispatchDiscoveredProbesAsync(cancellationToken);
                 break;
             case TranscodeResponse transcodeResponse:
@@ -47,8 +52,17 @@ public partial class MessageHandler
             case Heartbeat _:
                 await HandleHeartbeat(nodeConnectionInfo, cancellationToken);
                 break;
-            case IncrementSlotsMessage _:
-                nodeConnectionInfo.FreeSlots++;
+            case IncrementSlotsMessage msg:
+                var group = nodeConnectionInfo
+                    .NodeInfo?.EncoderCapabilities.FirstOrDefault(e =>
+                        e.EncoderName == msg.EncoderName
+                    )
+                    ?.SlotGroup;
+                if (
+                    group is not null
+                    && nodeConnectionInfo.FreeSlotsByGroup.TryGetValue(group, out var value)
+                )
+                    nodeConnectionInfo.FreeSlotsByGroup[group] = ++value;
                 break;
             case TranscodeProgress progress:
                 await HandleProgress(progress, cancellationToken);
