@@ -46,6 +46,12 @@ public class TranscodeManager : BackgroundService
 
             var completed = await Task.WhenAny(_transcodeJobs);
             var encoderName = completed.Result.EncoderSettingsSnapshot.EncoderName;
+            _logger.LogInformation(
+                "Transcode job {JobId} completed (success={Success}), releasing slot for {Encoder}",
+                completed.Result.TranscodeJobId,
+                completed.Result.Success,
+                encoderName
+            );
             await _connectionManager.SendAsync(completed.Result, stoppingToken);
             await _connectionManager.SendAsync(
                 new IncrementSlotsMessage(encoderName) { CorrelationId = Guid.NewGuid() },
@@ -62,10 +68,21 @@ public class TranscodeManager : BackgroundService
             var request in _transcodeRequests.TranscodeRequests.Reader.ReadAllAsync(stoppingToken)
         )
         {
+            _logger.LogInformation(
+                "Received transcode request for job {JobId} ({FilePath})",
+                request.JobLeaseId,
+                request.FilePath
+            );
+
             using var scope = _serviceScopeFactory.CreateScope();
             var transcodeService = scope.ServiceProvider.GetRequiredService<TranscodeService>();
             if (!_slotTracker.TryAcquire(request.SpecificEncoder))
             {
+                _logger.LogWarning(
+                    "No free slot for encoder {Encoder}, rejecting job {JobId}",
+                    request.SpecificEncoder,
+                    request.JobLeaseId
+                );
                 await _connectionManager.SendAsync(
                     new TranscodeRejection(request.JobLeaseId) { CorrelationId = Guid.NewGuid() },
                     stoppingToken
@@ -73,6 +90,11 @@ public class TranscodeManager : BackgroundService
                 continue;
             }
 
+            _logger.LogInformation(
+                "Starting transcode for job {JobId} using encoder {Encoder}",
+                request.JobLeaseId,
+                request.SpecificEncoder
+            );
             _transcodeJobs.Add(
                 transcodeService.RunTranscodeAsync(
                     request.JobLeaseId,
