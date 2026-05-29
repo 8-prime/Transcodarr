@@ -1,5 +1,4 @@
-﻿using Transcodarr.Node.Common.Models;
-using Transcodarr.Node.Services.Connection;
+﻿using Transcodarr.Node.Services.Connection;
 using Transcodarr.Node.Services.NodeState;
 using Transcodarr.Shared.DTOs;
 

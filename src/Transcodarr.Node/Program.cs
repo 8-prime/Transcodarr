@@ -25,7 +25,7 @@ builder.Services.AddHostedService<NodeLifecycleManager>();
 
 //Transcoding
 builder.Services.AddScoped<FileProbeService>();
-builder.Services.AddSingleton<TranscodeManager>();
+builder.Services.AddHostedService<TranscodeManager>();
 builder.Services.AddScoped<TranscodeService>();
 builder.Services.AddSingleton<TranscodesQueue>();
 
