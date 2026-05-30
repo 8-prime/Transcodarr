@@ -60,7 +60,7 @@ public class ConnectionManager
             var matchingEncoders = nodeInfo.EncoderCapabilities.Where(e => e.CodecType == codec);
             foreach (var encoder in matchingEncoders)
             {
-                if (nodeInfo.SlotGroupCapacities.GetValueOrDefault(encoder.SlotGroup) <= 0)
+                if (nodeConnectionInfo.FreeSlotsByGroup.GetValueOrDefault(encoder.SlotGroup) <= 0)
                 {
                     continue;
                 }
@@ -77,12 +77,17 @@ public class ConnectionManager
     public int GetFreeSlotsForCodec(VideoCodec codec)
     {
         var total = 0;
-        foreach (var nodeInfo in _connections.Values.Select(n => n.NodeInfo).OfType<NodeInfo>())
+        foreach (var nodeConnectionInfo in _connections.Values)
         {
+            if (nodeConnectionInfo.NodeInfo is not { } nodeInfo)
+                continue;
+
             var matchingEncoders = nodeInfo
                 .EncoderCapabilities.Where(e => e.CodecType == codec)
                 .Select(e => e.SlotGroup);
-            total += matchingEncoders.Sum(e => nodeInfo.SlotGroupCapacities.GetValueOrDefault(e));
+            total += matchingEncoders.Sum(e =>
+                nodeConnectionInfo.FreeSlotsByGroup.GetValueOrDefault(e)
+            );
         }
 
         return total;
