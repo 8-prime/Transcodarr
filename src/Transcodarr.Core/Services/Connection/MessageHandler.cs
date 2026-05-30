@@ -14,19 +14,22 @@ public partial class MessageHandler
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ConfigurationService _configurationService;
     private readonly ProbeManagerService _probeManager;
+    private readonly FileMoveSuppressService _fileMoveSuppressService;
     private readonly ILogger<MessageHandler> _logger;
 
     public MessageHandler(
         IServiceScopeFactory serviceScopeFactory,
         ILogger<MessageHandler> logger,
         ConfigurationService configurationService,
-        ProbeManagerService probeManager
+        ProbeManagerService probeManager,
+        FileMoveSuppressService fileMoveSuppressService
     )
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _configurationService = configurationService;
         _probeManager = probeManager;
+        _fileMoveSuppressService = fileMoveSuppressService;
     }
 
     public async Task ProcessMessageAsync(
@@ -62,7 +65,24 @@ public partial class MessageHandler
                     group is not null
                     && nodeConnectionInfo.FreeSlotsByGroup.TryGetValue(group, out var value)
                 )
+                {
                     nodeConnectionInfo.FreeSlotsByGroup[group] = ++value;
+                    _logger.LogInformation(
+                        "Slot returned for encoder {Encoder} (group {Group}) on node {NodeId}: {FreeSlots} free",
+                        msg.EncoderName,
+                        group,
+                        nodeConnectionInfo.ConnectionId,
+                        value
+                    );
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "IncrementSlots for unknown encoder {Encoder} on node {NodeId} ignored",
+                        msg.EncoderName,
+                        nodeConnectionInfo.ConnectionId
+                    );
+                }
                 break;
             case TranscodeProgress progress:
                 await HandleProgress(progress, cancellationToken);
@@ -80,8 +100,6 @@ public partial class MessageHandler
         CancellationToken cancellationToken
     )
     {
-        _probeManager.Complete(probeResponse.MediaFileId);
-
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
         var file = await context
@@ -90,6 +108,7 @@ public partial class MessageHandler
 
         if (file is null || !File.Exists(file.Path))
         {
+            _probeManager.Complete(probeResponse.MediaFileId);
             return;
         }
 
@@ -100,6 +119,7 @@ public partial class MessageHandler
                 file.Id,
                 file.Path
             );
+            _probeManager.Complete(probeResponse.MediaFileId);
             var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
             await fileProbeService.ProbeFileAsync(file.Path, file.Id, cancellationToken);
             return;
@@ -145,6 +165,7 @@ public partial class MessageHandler
         file.Status = TranscodeStatus.Pending;
 
         await context.SaveChangesAsync(cancellationToken);
+        _probeManager.Complete(probeResponse.MediaFileId);
     }
 
     private async Task HandleProgress(
@@ -214,6 +235,7 @@ public partial class MessageHandler
                 return;
             }
 
+            _fileMoveSuppressService.Suppress(job.MediaFile.Path);
             File.Move(job.OutputPath, job.MediaFile.Path, true);
             var fileInfo = new FileInfo(job.MediaFile.Path);
             job.Status = TranscodeJobStatus.Completed;
@@ -234,6 +256,7 @@ public partial class MessageHandler
         else
         {
             job.Status = TranscodeJobStatus.Completed;
+            job.MediaFile.Status = TranscodeStatus.Completed;
             context.TranscodeResults.Add(
                 new TranscodeResultEntity()
                 {

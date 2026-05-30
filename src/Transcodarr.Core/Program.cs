@@ -24,6 +24,7 @@ builder.Services.AddDbContextFactory<TranscodarrDbContext>(options =>
 builder.Services.AddSingleton<ConfigurationService>();
 
 builder.Services.AddSingleton<ProbeManagerService>();
+builder.Services.AddSingleton<FileMoveSuppressService>();
 builder.Services.AddSingleton<ConnectionManager>();
 builder.Services.AddSingleton<MessageHandler>();
 builder.Services.AddTransient<WebSocketConnectionService>();

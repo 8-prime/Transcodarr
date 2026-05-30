@@ -9,6 +9,7 @@ namespace Transcodarr.Core.Services.MediaFiles;
 public class LibraryWatcherService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly FileMoveSuppressService _fileMoveSuppressService;
     private readonly Dictionary<Guid, FileSystemWatcher> _fileSystemWatchers = new();
     private readonly ILogger<LibraryWatcherService> _logger;
 
@@ -17,10 +18,12 @@ public class LibraryWatcherService : BackgroundService
 
     public LibraryWatcherService(
         IServiceScopeFactory scopeFactory,
+        FileMoveSuppressService fileMoveSuppressService,
         ILogger<LibraryWatcherService> logger
     )
     {
         _scopeFactory = scopeFactory;
+        _fileMoveSuppressService = fileMoveSuppressService;
         _logger = logger;
     }
 
@@ -94,6 +97,9 @@ public class LibraryWatcherService : BackgroundService
                     StringComparison.OrdinalIgnoreCase
                 )
             )
+                continue;
+
+            if (_fileMoveSuppressService.ConsumeIfSuppressed(fileSystemEventArgs.FullPath))
                 continue;
 
             _logger.LogDebug(
