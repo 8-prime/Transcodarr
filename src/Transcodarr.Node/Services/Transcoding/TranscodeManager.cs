@@ -67,6 +67,7 @@ public class TranscodeManager : BackgroundService
                     completed.Result.TranscodeJobId
                 );
             }
+
             _transcodeJobs.Remove(completed);
             _slotTracker.Release(encoderName);
         }
@@ -106,13 +107,17 @@ public class TranscodeManager : BackgroundService
                 request.SpecificEncoder
             );
             _transcodeJobs.Add(
-                transcodeService.RunTranscodeAsync(
-                    request.JobLeaseId,
-                    request.FilePath,
-                    request.OutputPath,
-                    request.TotalDuration,
-                    request.QualitySettings,
-                    request.SpecificEncoder,
+                Task.Run(
+                    () =>
+                        transcodeService.RunTranscodeAsync(
+                            request.JobLeaseId,
+                            request.FilePath,
+                            request.OutputPath,
+                            request.TotalDuration,
+                            request.QualitySettings,
+                            request.SpecificEncoder,
+                            stoppingToken
+                        ),
                     stoppingToken
                 )
             );
