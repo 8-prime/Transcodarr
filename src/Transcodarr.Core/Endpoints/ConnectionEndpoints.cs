@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Transcodarr.Core.Common.DTOs;
 using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Services;
 using Transcodarr.Shared.DTOs;
@@ -19,11 +20,21 @@ public static class ConnectionEndpoints
         return endpoints;
     }
 
-    private static Ok<ICollection<NodeConnectionInfo>> GetConnections(
+    private static Ok<IEnumerable<ConnectionsResponse>> GetConnections(
         [FromServices] ConnectionManager connectionManager
     )
     {
-        return TypedResults.Ok(connectionManager.GetConnections());
+        return TypedResults.Ok(
+            connectionManager
+                .GetConnections()
+                .Select(c => new ConnectionsResponse
+                {
+                    ConnectionId = c.ConnectionId,
+                    ConnectionIsReady = c.ConnectionIsReady,
+                    FreeSlots = c.TotalFreeSlots,
+                    NodeInfo = c.NodeInfo,
+                })
+        );
     }
 
     private static async Task<IResult> MapAddConnection(
@@ -96,6 +107,7 @@ public static class ConnectionEndpoints
             {
                 continue;
             }
+
             await messageHandler.ProcessMessageAsync(message, info, cancellationToken);
         }
     }
