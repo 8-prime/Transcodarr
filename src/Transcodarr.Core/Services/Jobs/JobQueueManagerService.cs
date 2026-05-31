@@ -70,8 +70,7 @@ public class JobQueueManagerService : BackgroundService
         }
 
         var pendingJobs = await dbContext
-            .MediaFiles.AsNoTracking()
-            .Include(file => file.Jobs)
+            .MediaFiles.Include(file => file.Jobs)
             .Include(file => file.Metadata)
             .Where(file =>
                 file.Status == TranscodeStatus.Pending
@@ -97,10 +96,9 @@ public class JobQueueManagerService : BackgroundService
                 _configurationService.Current,
                 stoppingToken
             );
+            pendingRequest.Status = TranscodeStatus.InProgress;
             freeSlots--;
         }
-
-        return;
     }
 
     private async Task HandleDiscoveredJobs(
