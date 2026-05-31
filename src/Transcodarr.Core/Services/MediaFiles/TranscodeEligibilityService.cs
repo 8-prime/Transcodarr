@@ -1,6 +1,6 @@
 ﻿using Transcodarr.Shared.DTOs;
 
-namespace Transcodarr.Core.Services;
+namespace Transcodarr.Core.Services.MediaFiles;
 
 public class TranscodeEligibilityService
 {
