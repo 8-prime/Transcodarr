@@ -16,6 +16,10 @@ public class LibraryWatcherService : BackgroundService
     private readonly Channel<FileSystemEventArgs> _fileSystemWatcherEvents =
         Channel.CreateBounded<FileSystemEventArgs>(200);
 
+    private readonly Dictionary<string, DateTimeOffset> _recentChangedTimes = new(
+        StringComparer.OrdinalIgnoreCase
+    );
+
     public LibraryWatcherService(
         IServiceScopeFactory scopeFactory,
         FileMoveSuppressService fileMoveSuppressService,
@@ -98,6 +102,7 @@ public class LibraryWatcherService : BackgroundService
             {
                 continue;
             }
+
             if (
                 fileSystemEventArgs.FullPath.Contains(
                     FileTypeConstants.TempFileSuffix,
@@ -111,6 +116,20 @@ public class LibraryWatcherService : BackgroundService
             if (_fileMoveSuppressService.ConsumeIfSuppressed(fileSystemEventArgs.FullPath))
             {
                 continue;
+            }
+
+            if (fileSystemEventArgs.ChangeType == WatcherChangeTypes.Changed)
+            {
+                var now = DateTimeOffset.UtcNow;
+                if (
+                    _recentChangedTimes.TryGetValue(fileSystemEventArgs.FullPath, out var lastSeen)
+                    && now - lastSeen < TimeSpan.FromSeconds(1)
+                )
+                {
+                    continue;
+                }
+
+                _recentChangedTimes[fileSystemEventArgs.FullPath] = now;
             }
 
             await using var scope = _scopeFactory.CreateAsyncScope();
@@ -178,7 +197,7 @@ public class LibraryWatcherService : BackgroundService
         libraryService.AddNewFile(fileSystemEventArgs.FullPath, libraryId);
     }
 
-    private static async Task HandleFileChanged(
+    private async Task HandleFileChanged(
         CancellationToken stoppingToken,
         TranscodarrDbContext db,
         FileSystemEventArgs fileSystemEventArgs,
@@ -191,6 +210,7 @@ public class LibraryWatcherService : BackgroundService
         );
         if (changed is not null)
         {
+            _logger.LogInformation("Probing changed file {File}", fileSystemEventArgs.FullPath);
             var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
             changed.FileModifiedAt = new FileInfo(fileSystemEventArgs.FullPath).LastWriteTimeUtc;
             changed.Status = TranscodeStatus.Discovered;
@@ -277,7 +297,7 @@ public class LibraryWatcherService : BackgroundService
 
         var fsWatcher = new FileSystemWatcher(fileSystemPath);
         fsWatcher.IncludeSubdirectories = true;
-        fsWatcher.Changed += OnFileSystemWatcherEvent;
+        // fsWatcher.Changed += OnFileSystemWatcherEvent;
         fsWatcher.Created += OnFileSystemWatcherEvent;
         fsWatcher.Deleted += OnFileSystemWatcherEvent;
         fsWatcher.Renamed += OnFileSystemWatcherEvent;
