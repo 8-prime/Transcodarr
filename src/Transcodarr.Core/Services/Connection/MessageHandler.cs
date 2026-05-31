@@ -63,10 +63,10 @@ public partial class MessageHandler
                     ?.SlotGroup;
                 if (
                     group is not null
-                    && nodeConnectionInfo.FreeSlotsByGroup.TryGetValue(group, out var value)
+                    && nodeConnectionInfo.FreeSlotsByGroup.TryGetValue(group.Value, out var value)
                 )
                 {
-                    nodeConnectionInfo.FreeSlotsByGroup[group] = ++value;
+                    nodeConnectionInfo.FreeSlotsByGroup[group.Value] = ++value;
                     _logger.LogInformation(
                         "Slot returned for encoder {Encoder} (group {Group}) on node {NodeId}: {FreeSlots} free",
                         msg.EncoderName,
@@ -83,6 +83,7 @@ public partial class MessageHandler
                         nodeConnectionInfo.ConnectionId
                     );
                 }
+
                 break;
             case TranscodeProgress progress:
                 await HandleProgress(progress, cancellationToken);

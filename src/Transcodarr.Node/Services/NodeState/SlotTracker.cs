@@ -4,12 +4,12 @@ namespace Transcodarr.Node.Services.NodeState;
 
 public class SlotTracker
 {
-    private readonly Dictionary<string, SemaphoreSlim> _groupSemaphores = [];
-    private readonly Dictionary<string, string> _encoderToGroup = [];
+    private readonly Dictionary<EncoderGroup, SemaphoreSlim> _groupSemaphores = [];
+    private readonly Dictionary<string, EncoderGroup> _encoderToGroup = [];
 
     public void Initialize(
         IEnumerable<EncoderCapability> capabilities,
-        IReadOnlyDictionary<string, int> groupCapacities
+        IReadOnlyDictionary<EncoderGroup, int> groupCapacities
     )
     {
         foreach (var capability in capabilities)

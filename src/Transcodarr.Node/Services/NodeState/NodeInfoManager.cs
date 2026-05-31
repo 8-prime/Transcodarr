@@ -6,11 +6,11 @@ namespace Transcodarr.Node.Services.NodeState;
 public class NodeInfoManager
 {
     private readonly List<EncoderCapability> _capabilities = [];
-    private Dictionary<string, int> _groupCapacities = new();
+    private Dictionary<EncoderGroup, int> _groupCapacities = new();
 
     public void Initialize(
         List<EncoderCapability> capabilities,
-        Dictionary<string, int> groupCapacities
+        Dictionary<EncoderGroup, int> groupCapacities
     )
     {
         _capabilities.Clear();
@@ -19,5 +19,5 @@ public class NodeInfoManager
     }
 
     public ReadOnlyCollection<EncoderCapability> Capabilities => _capabilities.AsReadOnly();
-    public IReadOnlyDictionary<string, int> GroupCapacities => _groupCapacities;
+    public IReadOnlyDictionary<EncoderGroup, int> GroupCapacities => _groupCapacities;
 }

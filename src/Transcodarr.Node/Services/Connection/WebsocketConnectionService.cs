@@ -83,7 +83,7 @@ public class WebsocketConnectionService : BackgroundService
 
         try
         {
-            await Task.WhenAny(
+            var completed = await Task.WhenAny(
                 ProcessMessagesAsync(ws, linked.Token),
                 SendMessagesAsync(ws, linked.Token),
                 SendHeartBeatsAsync(linked.Token)

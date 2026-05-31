@@ -6,25 +6,55 @@ using Transcodarr.Shared;
 
 namespace Transcodarr.Node.Services.NodeState;
 
-public class CapabilitiesService(ILogger<CapabilitiesService> logger, IOptions<NodeConfiguration> configuration)
+public class CapabilitiesService(
+    ILogger<CapabilitiesService> logger,
+    IOptions<NodeConfiguration> configuration
+)
 {
-    private readonly Dictionary<string, int> _slotsByGroup = new()
+    private readonly Dictionary<EncoderGroup, int> _slotsByGroup = new()
     {
         {
-            "software",
-            configuration.Value.EncoderTypeCapacities.TryGetValue("software", out var softwareSlots) ? softwareSlots : 1
+            EncoderGroup.Software,
+            configuration.Value.EncoderTypeCapacities.TryGetValue(
+                EncoderGroup.Software,
+                out var softwareSlots
+            )
+                ? softwareSlots
+                : 1
         },
         {
-            "nvenc", configuration.Value.EncoderTypeCapacities.TryGetValue("nvenc", out var nvencSlots) ? nvencSlots : 2
+            EncoderGroup.Nvenc,
+            configuration.Value.EncoderTypeCapacities.TryGetValue(
+                EncoderGroup.Nvenc,
+                out var nvencSlots
+            )
+                ? nvencSlots
+                : 2
         },
-        { "amf", configuration.Value.EncoderTypeCapacities.TryGetValue("amf", out var amfSlots) ? amfSlots : 1 },
-        { "qsv", configuration.Value.EncoderTypeCapacities.TryGetValue("qsv", out var qsvSlots) ? qsvSlots : 1 },
+        {
+            EncoderGroup.Amf,
+            configuration.Value.EncoderTypeCapacities.TryGetValue(
+                EncoderGroup.Amf,
+                out var amfSlots
+            )
+                ? amfSlots
+                : 1
+        },
+        {
+            EncoderGroup.Qsv,
+            configuration.Value.EncoderTypeCapacities.TryGetValue(
+                EncoderGroup.Qsv,
+                out var qsvSlots
+            )
+                ? qsvSlots
+                : 1
+        },
     };
 
     public async Task<(
         List<EncoderCapability> Encoders,
-        Dictionary<string, int> GroupCapacities
-        )> GetEncodersAsync(CancellationToken stoppingToken)
+        Dictionary<EncoderGroup, int> GroupCapacities
+    )> GetEncodersAsync(CancellationToken stoppingToken)
     {
         var encoders = new List<EncoderCapability>();
         foreach (var kvp in TranscodersMapping.EncodersByCodec)

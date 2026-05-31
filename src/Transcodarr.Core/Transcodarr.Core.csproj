@@ -21,4 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Transcodarr.Shared\Transcodarr.Shared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Db\" />
+  </ItemGroup>
 </Project>

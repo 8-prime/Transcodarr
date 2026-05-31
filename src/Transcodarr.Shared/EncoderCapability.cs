@@ -6,5 +6,5 @@ public class EncoderCapability
 {
     public required string EncoderName { get; init; }
     public VideoCodec CodecType { get; init; }
-    public required string SlotGroup { get; init; }
+    public required EncoderGroup SlotGroup { get; init; }
 }

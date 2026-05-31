@@ -9,7 +9,7 @@ public class NodeConnectionInfo : IEquatable<NodeConnectionInfo>
     public required WebSocket WebSocket { get; set; }
     public Guid SessionId { get; } = Guid.NewGuid();
     public NodeInfo? NodeInfo { get; set; }
-    public Dictionary<string, int> FreeSlotsByGroup { get; set; } = new();
+    public Dictionary<EncoderGroup, int> FreeSlotsByGroup { get; set; } = new();
     public int TotalFreeSlots => FreeSlotsByGroup.Values.Sum();
     public bool ConnectionIsReady => NodeInfo is not null;
 
