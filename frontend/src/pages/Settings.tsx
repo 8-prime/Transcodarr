@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
 import { apiFetch } from '@/lib/api'
 import type { AppSettings } from '@/types/settings'
 
@@ -44,7 +45,7 @@ export function SettingsPage() {
     queryKey: ['settings'],
     queryFn: async () => {
       try{
-        apiFetch<AppSettings>('/settings')
+        return apiFetch<AppSettings>('/settings')
       }
       catch (e) {
         if((e as {status?: number}).status === 404) return null
@@ -169,6 +170,22 @@ export function SettingsPage() {
               ))}
             </SelectContent>
           </Select>
+        </SettingsRow>
+
+        <Separator />
+
+        <SettingsRow
+          label="Temp directory"
+          description="Directory where in-progress transcode files are written before being moved to their final location."
+        >
+          <Input
+            className="w-[260px] font-mono text-sm"
+            value={current.transcodeTempDirectory}
+            onChange={(e) =>
+              setDraft({ ...current, transcodeTempDirectory: e.target.value })
+            }
+            placeholder="/tmp/transcodarr/"
+          />
         </SettingsRow>
       </div>
     </div>
