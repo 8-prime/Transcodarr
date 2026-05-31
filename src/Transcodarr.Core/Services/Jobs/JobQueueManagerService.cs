@@ -182,6 +182,7 @@ public class JobQueueManagerService : BackgroundService
         var outputPath = Path.Join(
             config.TranscodeTempDirectory,
             Path.GetFileNameWithoutExtension(fileInfo.FullName)
+                + "."
                 + FileTypeConstants.TempFileSuffix
                 + Path.GetExtension(fileInfo.FullName)
         );
