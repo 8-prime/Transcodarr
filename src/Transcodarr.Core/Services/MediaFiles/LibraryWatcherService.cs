@@ -90,17 +90,23 @@ public class LibraryWatcherService : BackgroundService
                     StringComparison.OrdinalIgnoreCase
                 )
             )
+            {
                 continue;
+            }
             if (
                 fileSystemEventArgs.FullPath.EndsWith(
                     FileTypeConstants.TempFileSuffix,
                     StringComparison.OrdinalIgnoreCase
                 )
             )
+            {
                 continue;
+            }
 
             if (_fileMoveSuppressService.ConsumeIfSuppressed(fileSystemEventArgs.FullPath))
+            {
                 continue;
+            }
 
             _logger.LogDebug(
                 "File system event {ChangeType} for {Path}",

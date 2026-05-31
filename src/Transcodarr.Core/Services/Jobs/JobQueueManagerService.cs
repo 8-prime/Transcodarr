@@ -49,71 +49,98 @@ public class JobQueueManagerService : BackgroundService
                 _configurationService.Current.TranscodeVideoCodec
             );
             var now = DateTimeOffset.UtcNow;
-            var timedOutJobs = await dbContext
-                .TranscodeJobs.Where(j =>
-                    j.LeaseExpiresAt <= now && j.Status == TranscodeJobStatus.Processing
-                )
-                .ExecuteUpdateAsync(
-                    setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.LeaseExpired),
-                    stoppingToken
-                );
-            if (timedOutJobs > 0)
-                _logger.LogInformation("Marked {TimedOutJobCount} jobs as timed out", timedOutJobs);
-
-            var discoveredFiles = await dbContext
-                .MediaFiles.Where(f => f.Status == TranscodeStatus.Discovered)
-                .ToListAsync(stoppingToken);
-            if (discoveredFiles.Count > 0)
-            {
-                var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
-                _logger.LogInformation(
-                    "Retrying probes for {Count} discovered files",
-                    discoveredFiles.Count
-                );
-                foreach (var file in discoveredFiles)
-                    await fileProbeService.ProbeFileAsync(file.Path, file.Id, stoppingToken);
-            }
-
-            if (freeSlots == 0)
-            {
-                _logger.LogInformation(
-                    "No free slots available on any node, skipping job creation"
-                );
-                continue;
-            }
-
-            var pendingJobs = await dbContext
-                .MediaFiles.AsNoTracking()
-                .Include(file => file.Jobs)
-                .Include(file => file.Metadata)
-                .Where(file =>
-                    file.Status == TranscodeStatus.Pending
-                    && (
-                        file.Jobs.Count == 0
-                        || file.Jobs.All(job => job.Status != TranscodeJobStatus.Processing)
-                    )
-                )
-                .OrderBy(file => file.DiscoveredAt)
-                .Take(freeSlots)
-                .ToListAsync(cancellationToken: stoppingToken);
-
-            _logger.LogInformation(
-                "Found {PendingJobCount} pending files eligible for transcoding",
-                pendingJobs.Count
-            );
-
-            foreach (var pendingRequest in pendingJobs)
-            {
-                await CreateJob(
-                    dbContext,
-                    pendingRequest,
-                    _configurationService.Current,
-                    stoppingToken
-                );
-                freeSlots--;
-            }
+            await HandleTimedOutJobs(stoppingToken, dbContext, now);
+            await HandleDiscoveredJobs(stoppingToken, dbContext, scope);
+            await HandlePendingJobs(stoppingToken, freeSlots, dbContext);
 
             await dbContext.SaveChangesAsync(stoppingToken);
+        }
+    }
+
+    private async Task HandlePendingJobs(
+        CancellationToken stoppingToken,
+        int freeSlots,
+        TranscodarrDbContext dbContext
+    )
+    {
+        if (freeSlots == 0)
+        {
+            _logger.LogInformation("No free slots available on any node, skipping job creation");
+            return;
+        }
+
+        var pendingJobs = await dbContext
+            .MediaFiles.AsNoTracking()
+            .Include(file => file.Jobs)
+            .Include(file => file.Metadata)
+            .Where(file =>
+                file.Status == TranscodeStatus.Pending
+                && (
+                    file.Jobs.Count == 0
+                    || file.Jobs.All(job => job.Status != TranscodeJobStatus.Processing)
+                )
+            )
+            .OrderBy(file => file.DiscoveredAt)
+            .Take(freeSlots)
+            .ToListAsync(cancellationToken: stoppingToken);
+
+        _logger.LogInformation(
+            "Found {PendingJobCount} pending files eligible for transcoding",
+            pendingJobs.Count
+        );
+
+        foreach (var pendingRequest in pendingJobs)
+        {
+            await CreateJob(
+                dbContext,
+                pendingRequest,
+                _configurationService.Current,
+                stoppingToken
+            );
+            freeSlots--;
+        }
+
+        return;
+    }
+
+    private async Task HandleDiscoveredJobs(
+        CancellationToken stoppingToken,
+        TranscodarrDbContext dbContext,
+        AsyncServiceScope scope
+    )
+    {
+        var discoveredFiles = await dbContext
+            .MediaFiles.Where(f => f.Status == TranscodeStatus.Discovered)
+            .ToListAsync(stoppingToken);
+        if (discoveredFiles.Count > 0)
+        {
+            var fileProbeService = scope.ServiceProvider.GetRequiredService<FileProbeService>();
+            _logger.LogInformation(
+                "Retrying probes for {Count} discovered files",
+                discoveredFiles.Count
+            );
+            foreach (var file in discoveredFiles)
+                await fileProbeService.ProbeFileAsync(file.Path, file.Id, stoppingToken);
+        }
+    }
+
+    private async Task HandleTimedOutJobs(
+        CancellationToken stoppingToken,
+        TranscodarrDbContext dbContext,
+        DateTimeOffset now
+    )
+    {
+        var timedOutJobs = await dbContext
+            .TranscodeJobs.Where(j =>
+                j.LeaseExpiresAt <= now && j.Status == TranscodeJobStatus.Processing
+            )
+            .ExecuteUpdateAsync(
+                setter => setter.SetProperty(j => j.Status, TranscodeJobStatus.LeaseExpired),
+                stoppingToken
+            );
+        if (timedOutJobs > 0)
+        {
+            _logger.LogInformation("Marked {TimedOutJobCount} jobs as timed out", timedOutJobs);
         }
     }
 
