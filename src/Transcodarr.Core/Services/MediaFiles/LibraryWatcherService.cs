@@ -85,7 +85,7 @@ public class LibraryWatcherService : BackgroundService
         {
             if (
                 fileSystemEventArgs is RenamedEventArgs renamed
-                && renamed.OldFullPath.EndsWith(
+                && renamed.OldFullPath.Contains(
                     FileTypeConstants.TempFileSuffix,
                     StringComparison.OrdinalIgnoreCase
                 )
@@ -94,7 +94,7 @@ public class LibraryWatcherService : BackgroundService
                 continue;
             }
             if (
-                fileSystemEventArgs.FullPath.EndsWith(
+                fileSystemEventArgs.FullPath.Contains(
                     FileTypeConstants.TempFileSuffix,
                     StringComparison.OrdinalIgnoreCase
                 )

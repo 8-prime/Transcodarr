@@ -181,7 +181,9 @@ public class JobQueueManagerService : BackgroundService
         var fileInfo = new FileInfo(pendingFile.Path);
         var outputPath = Path.Join(
             config.TranscodeTempDirectory,
-            Path.GetFileNameWithoutExtension(fileInfo.FullName) + FileTypeConstants.TempFileSuffix
+            Path.GetFileNameWithoutExtension(fileInfo.FullName)
+                + FileTypeConstants.TempFileSuffix
+                + Path.GetExtension(fileInfo.FullName)
         );
 
         var newJob = new TranscodeJobEntity
