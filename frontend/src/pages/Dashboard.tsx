@@ -13,7 +13,7 @@ import { StatCard } from '@/components/common/StatCard'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { MonoText } from '@/components/common/MonoText'
 import { apiFetch } from '@/lib/api'
-import type { TranscodeJob, CompletedJob } from '@/types/job'
+import type { QueueItem, CompletedJob } from '@/types/job'
 
 export function DashboardPage() {
   const { data: connections, isError } = useConnections()
@@ -23,7 +23,7 @@ export function DashboardPage() {
 
   const { data: queue = [] } = useQuery({
     queryKey: ['queue'],
-    queryFn: () => apiFetch<TranscodeJob[]>('/queue'),
+    queryFn: () => apiFetch<QueueItem[]>('/queue'),
     refetchInterval: 3000,
   })
 
@@ -34,9 +34,7 @@ export function DashboardPage() {
   })
 
   const processing = queue.filter((j) => j.state === 'Processing')
-  const pending = queue.filter(
-    (j) => j.state === 'Pending' || j.state === 'Assigned',
-  )
+  const pending = queue.filter((j) => j.state === 'Pending' || j.state === 'Discovered')
 
   return (
     <div className="space-y-8">
@@ -68,7 +66,7 @@ export function DashboardPage() {
         <StatCard
           label="Queued"
           value={pending.length}
-          hint="pending + assigned"
+          hint="discovered + pending"
           icon={ListOrdered}
           tone="warn"
         />

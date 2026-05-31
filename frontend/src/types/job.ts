@@ -1,23 +1,23 @@
-export type JobState =
+export type QueueItemState =
+  | 'Discovered'
   | 'Pending'
-  | 'Assigned'
   | 'Processing'
   | 'Completed'
   | 'Failed'
-  | 'Cancelled'
   | 'LeaseExpired'
 
-export interface TranscodeJob {
+export interface QueueItem {
   id: string
   fileName: string
   libraryName: string
   targetCodec: string
-  state: JobState
+  state: QueueItemState
   attemptNumber: number
   createdAt: string
   nodeId: string | null
   progressPct: number | null
 }
+
 
 export interface CompletedJob {
   id: string

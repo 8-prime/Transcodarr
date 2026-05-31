@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { MonoText } from '@/components/common/MonoText'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -15,78 +14,51 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { apiFetch } from '@/lib/api'
-import type { JobState, TranscodeJob } from '@/types/job'
+import type { QueueItem, QueueItemState } from '@/types/job'
 
-const TABS: { key: JobState; label: string }[] = [
-  { key: 'Pending', label: 'Pending' },
-  { key: 'Assigned', label: 'Assigned' },
-  { key: 'Processing', label: 'Processing' },
+const STATE_ORDER: QueueItemState[] = [
+  'Processing',
+  'Pending',
+  'Discovered',
+  'Failed',
+  'LeaseExpired',
 ]
 
 export function QueuePage() {
-  const { data: jobs = [] } = useQuery({
+  const { data: items = [] } = useQuery({
     queryKey: ['queue'],
-    queryFn: () => apiFetch<TranscodeJob[]>('/queue'),
+    queryFn: () => apiFetch<QueueItem[]>('/queue'),
     refetchInterval: 3000,
   })
 
-  const grouped = useMemo(() => {
-    return {
-      Pending: jobs.filter((j) => j.state === 'Pending'),
-      Assigned: jobs.filter((j) => j.state === 'Assigned'),
-      Processing: jobs.filter((j) => j.state === 'Processing'),
-    } as Record<'Pending' | 'Assigned' | 'Processing', TranscodeJob[]>
-  }, [jobs])
+  const sorted = useMemo(
+    () =>
+      [...items].sort(
+        (a, b) => STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state),
+      ),
+    [items],
+  )
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Queue"
-        description="Jobs waiting to run, recently assigned, and currently encoding."
+        description="All media files awaiting or actively undergoing transcoding."
       />
-
-      <Tabs defaultValue="Processing" className="space-y-4">
-        <TabsList>
-          {TABS.map((t) => (
-            <TabsTrigger key={t.key} value={t.key} className="gap-2">
-              {t.label}
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {grouped[t.key as 'Pending' | 'Assigned' | 'Processing'].length}
-              </span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {TABS.map((t) => (
-          <TabsContent key={t.key} value={t.key}>
-            <QueueTable
-              jobs={grouped[t.key as 'Pending' | 'Assigned' | 'Processing']}
-              showProgress={t.key === 'Processing'}
-              showNode={t.key !== 'Pending'}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+      <QueueTable items={sorted} />
     </div>
   )
 }
 
-function QueueTable({
-  jobs,
-  showProgress,
-  showNode,
-}: {
-  jobs: TranscodeJob[]
-  showProgress: boolean
-  showNode: boolean
-}) {
-  if (jobs.length === 0) {
+function QueueTable({ items }: { items: QueueItem[] }) {
+  if (items.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border bg-card/40 p-10 text-center text-sm text-muted-foreground">
         Nothing here.
       </div>
     )
   }
+
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <Table>
@@ -94,58 +66,58 @@ function QueueTable({
           <TableRow className="hover:bg-transparent">
             <TableHead>File</TableHead>
             <TableHead className="w-[140px]">Library</TableHead>
-            <TableHead className="w-[160px]">Codec</TableHead>
-            {showNode && <TableHead className="w-[140px]">Node</TableHead>}
-            {showProgress && (
-              <TableHead className="w-[180px]">Progress</TableHead>
-            )}
             <TableHead className="w-[120px]">State</TableHead>
+            <TableHead className="w-[160px]">Codec</TableHead>
+            <TableHead className="w-[140px]">Node</TableHead>
+            <TableHead className="w-[180px]">Progress</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {jobs.map((job) => (
-            <TableRow key={job.id}>
+          {items.map((item) => (
+            <TableRow key={item.id}>
               <TableCell>
-                <div className="truncate text-sm">{job.fileName}</div>
-                <MonoText muted className="block truncate">
-                  attempt #{job.attemptNumber + 1}
-                </MonoText>
+                <div className="truncate text-sm">{item.fileName}</div>
+                {item.attemptNumber > 0 && (
+                  <MonoText muted className="block truncate">
+                    attempt #{item.attemptNumber}
+                  </MonoText>
+                )}
               </TableCell>
               <TableCell>
-                <span className="text-sm text-muted-foreground">{job.libraryName}</span>
+                <span className="text-sm text-muted-foreground">{item.libraryName}</span>
               </TableCell>
-              <TableCell>
-                <Badge variant="secondary" className="font-mono text-[11px]">
-                  {job.targetCodec}
-                </Badge>
-              </TableCell>
-              {showNode && (
-                <TableCell>
-                  {job.nodeId ? (
-                    <MonoText className="text-foreground">{job.nodeId}</MonoText>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-              )}
-              {showProgress && (
-                <TableCell>
-                  {job.progressPct != null ? (
-                    <div className="flex items-center gap-2">
-                      <Progress value={job.progressPct} className="h-1.5" />
-                      <MonoText className="w-10 text-right">{job.progressPct}%</MonoText>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-              )}
               <TableCell>
                 <StatusBadge
-                  status={stateToStatus(job.state)}
-                  label={job.state}
-                  pulse={job.state === 'Processing'}
+                  status={stateToStatus(item.state)}
+                  label={item.state}
+                  pulse={item.state === 'Processing'}
                 />
+              </TableCell>
+              <TableCell>
+                {item.targetCodec ? (
+                  <Badge variant="secondary" className="font-mono text-[11px]">
+                    {item.targetCodec}
+                  </Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {item.nodeId ? (
+                  <MonoText className="text-foreground">{item.nodeId}</MonoText>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {item.progressPct != null ? (
+                  <div className="flex items-center gap-2">
+                    <Progress value={item.progressPct} className="h-1.5" />
+                    <MonoText className="w-10 text-right">{item.progressPct}%</MonoText>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -155,17 +127,16 @@ function QueueTable({
   )
 }
 
-function stateToStatus(state: JobState) {
+function stateToStatus(state: QueueItemState) {
   switch (state) {
+    case 'Discovered':
     case 'Pending':
-    case 'Assigned':
       return 'pending' as const
     case 'Processing':
       return 'processing' as const
     case 'Completed':
       return 'completed' as const
     case 'Failed':
-    case 'Cancelled':
     case 'LeaseExpired':
       return 'failed' as const
   }
