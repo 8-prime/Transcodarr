@@ -27,7 +27,7 @@ public class FileProbeService
             ),
             VideoCodec = mainVideoStream.CodecName,
             Bitrate = mainVideoStream.BitRate,
-            Duration = mainVideoStream.Duration,
+            Duration = mediaInfo.Duration,
             Height = mainVideoStream.Height,
             Width = mainVideoStream.Width,
             IsHdr =
