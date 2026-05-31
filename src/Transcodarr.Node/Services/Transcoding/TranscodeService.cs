@@ -67,47 +67,7 @@ public class TranscodeService
 
         _logger.LogDebug("Running FFMpeg with args {Args}", args.Arguments);
 
-        // var success = await args.ProcessAsynchronously(throwOnError: false).ConfigureAwait(false);
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = "ffmpeg",
-            Arguments = args.Arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-        using var process = new Process();
-        process.StartInfo = psi;
-        process.OutputDataReceived += (_, e) => _logger.LogDebug("stdout: {Output}", e.Data);
-        process.ErrorDataReceived += (_, e) => _logger.LogDebug("stdout: {Output}", e.Data);
-
-        if (!process.Start())
-        {
-            return new TranscodeResponse(
-                jobLeaseId,
-                false,
-                new TranscoderSnapshot(
-                    encoderName,
-                    transcodeQualitySettings.DesiredAudioCodec,
-                    transcodeQualitySettings.DesiredVideoCodec,
-                    transcodeQualitySettings.DesiredEncoderPreset,
-                    transcodeQualitySettings.ConstantRateFactor
-                ),
-                0,
-                0
-            )
-            {
-                CorrelationId = Guid.NewGuid(),
-            };
-            ;
-        }
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        await process.WaitForExitAsync(stoppingToken);
-        var success = process.ExitCode == 0;
+        var success = await args.ProcessAsynchronously(throwOnError: false).ConfigureAwait(false);
         _logger.LogInformation("Job {JobId}: ffmpeg exited success={Success}", jobLeaseId, success);
 
         var fi = new FileInfo(outputPath);

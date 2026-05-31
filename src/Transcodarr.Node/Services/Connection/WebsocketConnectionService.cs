@@ -45,6 +45,7 @@ public class WebsocketConnectionService : BackgroundService
             try
             {
                 await OpenConnectionAndProcessMessagesAsync(stoppingToken);
+                _logger.LogInformation("Connection to core stopped");
             }
             catch (Exception ex)
             {
