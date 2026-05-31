@@ -52,6 +52,11 @@ public static class LibraryEndpoints
             );
         }
 
+        if (!Directory.Exists(request.Path))
+        {
+            return TypedResults.BadRequest("Invalid library path");
+        }
+
         dbContext.Libraries.Add(
             new LibraryEntity
             {
