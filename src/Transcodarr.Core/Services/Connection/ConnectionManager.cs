@@ -52,6 +52,7 @@ public class ConnectionManager
         [NotNullWhen(true)] out (NodeConnectionInfo, EncoderCapability)? connection
     )
     {
+        List<(NodeConnectionInfo, EncoderCapability)> matches = [];
         foreach (var nodeConnectionInfo in _connections.Values)
         {
             if (nodeConnectionInfo.NodeInfo is not { } nodeInfo)
@@ -67,13 +68,21 @@ public class ConnectionManager
                     continue;
                 }
 
-                connection = (nodeConnectionInfo, encoder);
-                return true;
+                matches.Add((nodeConnectionInfo, encoder));
             }
         }
 
-        connection = null;
-        return false;
+        if (matches.Count == 0)
+        {
+            connection = null;
+            return false;
+        }
+
+        connection = matches.All(m => m.Item2.SlotGroup == EncoderGroup.Software)
+            ? matches.FirstOrDefault()
+            : matches.FirstOrDefault(m => m.Item2.SlotGroup != EncoderGroup.Software);
+
+        return true;
     }
 
     public int GetFreeSlotsForCodec(VideoCodec codec)
