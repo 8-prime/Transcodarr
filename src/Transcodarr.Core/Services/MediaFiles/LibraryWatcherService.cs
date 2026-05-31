@@ -83,6 +83,11 @@ public class LibraryWatcherService : BackgroundService
             && _fileSystemWatcherEvents.Reader.TryRead(out var fileSystemEventArgs)
         )
         {
+            _logger.LogDebug(
+                "File system event {ChangeType} for {Path}",
+                fileSystemEventArgs.ChangeType,
+                fileSystemEventArgs.FullPath
+            );
             if (
                 fileSystemEventArgs is RenamedEventArgs renamed
                 && renamed.OldFullPath.Contains(
@@ -107,12 +112,6 @@ public class LibraryWatcherService : BackgroundService
             {
                 continue;
             }
-
-            _logger.LogDebug(
-                "File system event {ChangeType} for {Path}",
-                fileSystemEventArgs.ChangeType,
-                fileSystemEventArgs.FullPath
-            );
 
             await using var scope = _scopeFactory.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
