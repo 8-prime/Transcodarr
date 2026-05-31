@@ -46,7 +46,7 @@ public class TranscodeService
                 false,
                 options =>
                     options
-                        .WithVideoCodec(transcodeQualitySettings.DesiredVideoCodec.Map())
+                        .WithVideoCodec(encoderName)
                         .WithConstantRateFactor(transcodeQualitySettings.ConstantRateFactor)
                         .WithAudioCodec(transcodeQualitySettings.DesiredAudioCodec.Map())
                         .OverwriteExisting()
