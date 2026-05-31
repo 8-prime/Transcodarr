@@ -1,24 +1,30 @@
 using FFMpegCore;
 using FFMpegCore.Exceptions;
+using Microsoft.Extensions.Options;
 using Transcodarr.Node.Common.Models;
 using Transcodarr.Shared;
 
 namespace Transcodarr.Node.Services.NodeState;
 
-public class CapabilitiesService(ILogger<CapabilitiesService> logger)
+public class CapabilitiesService(ILogger<CapabilitiesService> logger, IOptions<NodeConfiguration> configuration)
 {
     private readonly Dictionary<string, int> _slotsByGroup = new()
     {
-        { "software", 1 },
-        { "nvenc", 2 },
-        { "amf", 1 },
-        { "qsv", 1 },
+        {
+            "software",
+            configuration.Value.EncoderTypeCapacities.TryGetValue("software", out var softwareSlots) ? softwareSlots : 1
+        },
+        {
+            "nvenc", configuration.Value.EncoderTypeCapacities.TryGetValue("nvenc", out var nvencSlots) ? nvencSlots : 2
+        },
+        { "amf", configuration.Value.EncoderTypeCapacities.TryGetValue("amf", out var amfSlots) ? amfSlots : 1 },
+        { "qsv", configuration.Value.EncoderTypeCapacities.TryGetValue("qsv", out var qsvSlots) ? qsvSlots : 1 },
     };
 
     public async Task<(
         List<EncoderCapability> Encoders,
         Dictionary<string, int> GroupCapacities
-    )> GetEncodersAsync(CancellationToken stoppingToken)
+        )> GetEncodersAsync(CancellationToken stoppingToken)
     {
         var encoders = new List<EncoderCapability>();
         foreach (var kvp in TranscodersMapping.EncodersByCodec)
