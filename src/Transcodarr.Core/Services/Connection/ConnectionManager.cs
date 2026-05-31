@@ -26,10 +26,12 @@ public class ConnectionManager
         return newConnection;
     }
 
-    public void CloseConnection(string nodeId)
+    public void CloseConnection(NodeConnectionInfo connection)
     {
-        _connections.TryRemove(nodeId, out _);
-        _probeManager.ClearNode(nodeId);
+        _connections.TryRemove(
+            new KeyValuePair<string, NodeConnectionInfo>(connection.ConnectionId, connection)
+        );
+        _probeManager.ClearNode(connection.ConnectionId);
     }
 
     public ICollection<NodeConnectionInfo> GetConnections()

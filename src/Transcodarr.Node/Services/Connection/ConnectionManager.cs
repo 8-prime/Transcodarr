@@ -43,7 +43,7 @@ public class ConnectionManager
     public async Task SendAsync<T>(T message, CancellationToken stoppingToken)
         where T : SocketMessage
     {
-        if (_webSocket == null)
+        if (_webSocket is not { State: WebSocketState.Open })
         {
             return;
         }
@@ -54,6 +54,11 @@ public class ConnectionManager
     public async Task SendAsync<T>(T message, WebSocket ws, CancellationToken stoppingToken)
         where T : SocketMessage
     {
+        if (ws.State != WebSocketState.Open)
+        {
+            return;
+        }
+
         Memory<byte> payLoad = JsonSerializer.SerializeToUtf8Bytes<SocketMessage>(message);
         await ws.SendAsync(
             payLoad,

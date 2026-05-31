@@ -51,11 +51,22 @@ public class TranscodeManager : BackgroundService
                 completed.Result.Success,
                 encoderName
             );
-            await _connectionManager.SendAsync(completed.Result, stoppingToken);
-            await _connectionManager.SendAsync(
-                new IncrementSlotsMessage(encoderName) { CorrelationId = Guid.NewGuid() },
-                stoppingToken
-            );
+            try
+            {
+                await _connectionManager.SendAsync(completed.Result, stoppingToken);
+                await _connectionManager.SendAsync(
+                    new IncrementSlotsMessage(encoderName) { CorrelationId = Guid.NewGuid() },
+                    stoppingToken
+                );
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Failed to report completion for job {JobId} — Core will handle via lease expiry",
+                    completed.Result.TranscodeJobId
+                );
+            }
             _transcodeJobs.Remove(completed);
             _slotTracker.Release(encoderName);
         }

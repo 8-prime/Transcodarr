@@ -199,8 +199,6 @@ public class JobQueueManagerService : BackgroundService
             ConstantRateFactor = config.ConstantRateFactor,
         };
 
-        dbContext.TranscodeJobs.Add(newJob);
-
         var request = new TranscodeRequest(
             pendingFile.Path,
             outputPath,
@@ -218,8 +216,22 @@ public class JobQueueManagerService : BackgroundService
         {
             CorrelationId = Guid.NewGuid(),
         };
-        await _webSocketConnectionService.SendFireAndForgetAsync(request, conn, stoppingToken);
 
+        try
+        {
+            await _webSocketConnectionService.SendFireAndForgetAsync(request, conn, stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to dispatch transcode request to node {NodeId}, will retry next cycle",
+                conn.ConnectionId
+            );
+            return;
+        }
+
+        dbContext.TranscodeJobs.Add(newJob);
         conn.FreeSlotsByGroup[encoder.SlotGroup]--;
     }
 }

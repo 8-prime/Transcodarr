@@ -196,11 +196,22 @@ public partial class MessageHandler
         await using var scope = _serviceScopeFactory.CreateAsyncScope();
         var wsConnectionService =
             scope.ServiceProvider.GetRequiredService<WebSocketConnectionService>();
-        await wsConnectionService.SendFireAndForgetAsync(
-            new Heartbeat { CorrelationId = Guid.NewGuid() },
-            nodeConnectionInfo,
-            cancellationToken
-        );
+        try
+        {
+            await wsConnectionService.SendFireAndForgetAsync(
+                new Heartbeat { CorrelationId = Guid.NewGuid() },
+                nodeConnectionInfo,
+                cancellationToken
+            );
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to echo heartbeat to node {NodeId}",
+                nodeConnectionInfo.ConnectionId
+            );
+        }
     }
 
     private async Task HandleTranscodeResponse(

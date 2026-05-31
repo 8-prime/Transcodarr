@@ -36,6 +36,7 @@ public static class ConnectionEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger(nameof(ConnectionEndpoints));
+        NodeConnectionInfo? connectionInfo = null;
         try
         {
             if (!context.WebSockets.IsWebSocketRequest)
@@ -44,15 +45,18 @@ public static class ConnectionEndpoints
             }
 
             var socket = await context.WebSockets.AcceptWebSocketAsync();
-            var connectionInfo = connectionManager.AddConnection(socket, id);
+            connectionInfo = connectionManager.AddConnection(socket, id);
             await ReadMessages(socket, connectionInfo, messageHandler, cancellationToken);
-            connectionManager.CloseConnection(id);
+            connectionManager.CloseConnection(connectionInfo);
             return TypedResults.Ok();
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Websocket connection for {id} failed", id);
-            connectionManager.CloseConnection(id);
+            if (connectionInfo is not null)
+            {
+                connectionManager.CloseConnection(connectionInfo);
+            }
         }
 
         return Results.Empty;
