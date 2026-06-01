@@ -53,6 +53,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseWebSockets();
 app.MapConnections();
+app.MapFilesystemEndpoints();
 app.MapHistoryEndpoints();
 app.MapLibraryEndpoints();
 app.MapQueueEndpoints();

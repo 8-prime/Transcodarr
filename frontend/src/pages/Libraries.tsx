@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { MonoText } from '@/components/common/MonoText'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { DirectoryPicker } from '@/components/DirectoryPicker'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,11 +69,7 @@ export function LibrariesPage() {
               <div className="flex flex-col gap-4 px-4 py-6">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium">Path</span>
-                  <Input
-                    placeholder="/mnt/media/movies"
-                    value={path}
-                    onChange={(e) => setPath(e.target.value)}
-                  />
+                  <DirectoryPicker value={path} onChange={setPath} />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium">Display name <span className="font-normal text-muted-foreground">(optional)</span></span>
