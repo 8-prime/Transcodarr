@@ -1,33 +1,33 @@
-import { useState } from 'react'
-import { Save } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { PageHeader } from '@/components/common/PageHeader'
-import { MonoText } from '@/components/common/MonoText'
-import { Button } from '@/components/ui/button'
+import { useState } from "react";
+import { Save } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { PageHeader } from "@/components/common/PageHeader";
+import { MonoText } from "@/components/common/MonoText";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
-import { Separator } from '@/components/ui/separator'
-import { Input } from '@/components/ui/input'
-import { apiFetch } from '@/lib/api'
-import type { AppSettings } from '@/types/settings'
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
+import { DirectoryPicker } from "@/components/DirectoryPicker";
+import { apiFetch } from "@/lib/api";
+import type { AppSettings } from "@/types/settings";
 
-const PRESETS: AppSettings['preset'][] = [
-  'Ultrafast',
-  'Superfast',
-  'Veryfast',
-  'Faster',
-  'Fast',
-  'Medium',
-  'Slow',
-  'Slower',
-  'Veryslow',
-]
+const PRESETS: AppSettings["preset"][] = [
+  "Ultrafast",
+  "Superfast",
+  "Veryfast",
+  "Faster",
+  "Fast",
+  "Medium",
+  "Slow",
+  "Slower",
+  "Veryslow",
+];
 
 const DEFAULT_SETTINGS: AppSettings = {
   videoCodec: "H265",
@@ -36,40 +36,39 @@ const DEFAULT_SETTINGS: AppSettings = {
   crf: 20,
   autoApplyTranscode: true,
   jobExpirationInMinutes: 30,
-  transcodeTempDirectory: '/tmp/transcodarr/'
-}
+  transcodeTempDirectory: "",
+};
 
 export function SettingsPage() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const { data: settings } = useQuery({
-    queryKey: ['settings'],
+    queryKey: ["settings"],
     queryFn: async () => {
-      try{
-        return apiFetch<AppSettings>('/settings')
-      }
-      catch (e) {
-        if((e as {status?: number}).status === 404) return null
-        throw e
+      try {
+        return apiFetch<AppSettings>("/settings");
+      } catch (e) {
+        if ((e as { status?: number }).status === 404) return null;
+        throw e;
       }
     },
     retry: (count, e) =>
-      (e as {status?: number}).status === 404 ? false : count < 3
-  })
+      (e as { status?: number }).status === 404 ? false : count < 3,
+  });
 
-  const [draft, setDraft] = useState<AppSettings | null>(null)
-  const current = draft ?? settings ?? DEFAULT_SETTINGS
-  const needsInit = settings === undefined
+  const [draft, setDraft] = useState<AppSettings | null>(null);
+  const current = draft ?? settings ?? DEFAULT_SETTINGS;
+  const needsInit = settings === undefined;
 
   const { mutate: save, isPending } = useMutation({
     mutationFn: (s: AppSettings) =>
-      apiFetch<void>('/settings', { method: 'PUT', body: JSON.stringify(s) }),
+      apiFetch<void>("/settings", { method: "PUT", body: JSON.stringify(s) }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] })
-      setDraft(null)
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      setDraft(null);
     },
-  })
+  });
 
-  if (!current) return null
+  if (!current) return null;
 
   return (
     <div className="space-y-6">
@@ -77,7 +76,11 @@ export function SettingsPage() {
         title="Settings"
         description="Encoder defaults applied to every queued job."
         actions={
-          <Button size="sm" disabled={(!draft && !needsInit) || isPending} onClick={() => save(current)}>
+          <Button
+            size="sm"
+            disabled={(!draft && !needsInit) || isPending}
+            onClick={() => save(current)}
+          >
             <Save className="h-3.5 w-3.5" />
             Save
           </Button>
@@ -92,16 +95,25 @@ export function SettingsPage() {
           <Select
             value={current.videoCodec}
             onValueChange={(v) =>
-              setDraft({ ...current, videoCodec: v as AppSettings['videoCodec'] })
+              setDraft({
+                ...current,
+                videoCodec: v as AppSettings["videoCodec"],
+              })
             }
           >
             <SelectTrigger className="w-[260px] font-mono">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="H265" className="font-mono text-sm">H.265 / HEVC</SelectItem>
-              <SelectItem value="H264" className="font-mono text-sm">H.264 / AVC</SelectItem>
-              <SelectItem value="Av1" className="font-mono text-sm">AV1</SelectItem>
+              <SelectItem value="H265" className="font-mono text-sm">
+                H.265 / HEVC
+              </SelectItem>
+              <SelectItem value="H264" className="font-mono text-sm">
+                H.264 / AVC
+              </SelectItem>
+              <SelectItem value="Av1" className="font-mono text-sm">
+                AV1
+              </SelectItem>
             </SelectContent>
           </Select>
         </SettingsRow>
@@ -115,16 +127,25 @@ export function SettingsPage() {
           <Select
             value={current.audioCodec}
             onValueChange={(v) =>
-              setDraft({ ...current, audioCodec: v as AppSettings['audioCodec'] })
+              setDraft({
+                ...current,
+                audioCodec: v as AppSettings["audioCodec"],
+              })
             }
           >
             <SelectTrigger className="w-[260px] font-mono">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Aac" className="font-mono text-sm">AAC</SelectItem>
-              <SelectItem value="Ac3" className="font-mono text-sm">AC3 / Dolby Digital</SelectItem>
-              <SelectItem value="Copy" className="font-mono text-sm">Copy (passthrough)</SelectItem>
+              <SelectItem value="Aac" className="font-mono text-sm">
+                AAC
+              </SelectItem>
+              <SelectItem value="Ac3" className="font-mono text-sm">
+                AC3 / Dolby Digital
+              </SelectItem>
+              <SelectItem value="Copy" className="font-mono text-sm">
+                Copy (passthrough)
+              </SelectItem>
             </SelectContent>
           </Select>
         </SettingsRow>
@@ -143,7 +164,9 @@ export function SettingsPage() {
               value={[current.crf]}
               onValueChange={(v) => setDraft({ ...current, crf: v[0] })}
             />
-            <MonoText className="w-8 text-right text-foreground">{current.crf}</MonoText>
+            <MonoText className="w-8 text-right text-foreground">
+              {current.crf}
+            </MonoText>
           </div>
         </SettingsRow>
 
@@ -156,7 +179,7 @@ export function SettingsPage() {
           <Select
             value={current.preset}
             onValueChange={(v) =>
-              setDraft({ ...current, preset: v as AppSettings['preset'] })
+              setDraft({ ...current, preset: v as AppSettings["preset"] })
             }
           >
             <SelectTrigger className="w-[260px] font-mono">
@@ -178,18 +201,18 @@ export function SettingsPage() {
           label="Temp directory"
           description="Directory where in-progress transcode files are written before being moved to their final location."
         >
-          <Input
-            className="w-[260px] font-mono text-sm"
-            value={current.transcodeTempDirectory}
-            onChange={(e) =>
-              setDraft({ ...current, transcodeTempDirectory: e.target.value })
-            }
-            placeholder="/tmp/transcodarr/"
-          />
+          <div className="w-[260px]">
+            <DirectoryPicker
+              value={current.transcodeTempDirectory}
+              onChange={(v) =>
+                setDraft({ ...current, transcodeTempDirectory: v })
+              }
+            />
+          </div>
         </SettingsRow>
       </div>
     </div>
-  )
+  );
 }
 
 function SettingsRow({
@@ -197,9 +220,9 @@ function SettingsRow({
   description,
   children,
 }: {
-  label: string
-  description?: string
-  children: React.ReactNode
+  label: string;
+  description?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -213,5 +236,5 @@ function SettingsRow({
       </div>
       <div className="shrink-0">{children}</div>
     </div>
-  )
+  );
 }
