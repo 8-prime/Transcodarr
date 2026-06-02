@@ -14,22 +14,19 @@ public partial class MessageHandler
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ConfigurationService _configurationService;
     private readonly ProbeManagerService _probeManager;
-    private readonly FileMoveSuppressService _fileMoveSuppressService;
     private readonly ILogger<MessageHandler> _logger;
 
     public MessageHandler(
         IServiceScopeFactory serviceScopeFactory,
         ILogger<MessageHandler> logger,
         ConfigurationService configurationService,
-        ProbeManagerService probeManager,
-        FileMoveSuppressService fileMoveSuppressService
+        ProbeManagerService probeManager        
     )
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _configurationService = configurationService;
         _probeManager = probeManager;
-        _fileMoveSuppressService = fileMoveSuppressService;
     }
 
     public async Task ProcessMessageAsync(
@@ -247,7 +244,6 @@ public partial class MessageHandler
                 return;
             }
 
-            _fileMoveSuppressService.Suppress(job.MediaFile.Path);
             File.Move(job.OutputPath, job.MediaFile.Path, true);
             var fileInfo = new FileInfo(job.MediaFile.Path);
             job.Status = TranscodeJobStatus.Completed;

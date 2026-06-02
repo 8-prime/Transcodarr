@@ -26,8 +26,8 @@ public class LibraryService
         _logger.LogInformation("Scanning library {LibraryPath}", libraryPath);
 
         var knownFiles = await _dbContext
-            .MediaFiles.AsNoTracking()
-            .Include(f => f.Library)
+            .MediaFiles.Where(f => f.LibraryId == libraryId)
+            .AsNoTracking()
             .ToDictionaryAsync(f => f.Path, stoppingToken);
 
         var newCount = 0;
@@ -67,13 +67,25 @@ public class LibraryService
             changedCount++;
         }
 
+        var deletedCount = 0;
+        if (knownFiles.Count > 0)
+        {
+            var idsToRemove = knownFiles.Values.Select(f => f.Id).ToList();
+            var toRemove = await _dbContext
+                .MediaFiles.Where(f => idsToRemove.Contains(f.Id))
+                .ToListAsync(stoppingToken);
+            _dbContext.MediaFiles.RemoveRange(toRemove);
+            deletedCount = toRemove.Count;
+        }
+
         await _dbContext.SaveChangesAsync(stoppingToken);
 
         _logger.LogInformation(
-            "Library scan complete for {LibraryPath}: {NewCount} new, {ChangedCount} changed",
+            "Library scan complete for {LibraryPath}: {NewCount} new, {ChangedCount} changed, {DeletedCount} deleted",
             libraryPath,
             newCount,
-            changedCount
+            changedCount,
+            deletedCount
         );
     }
 
