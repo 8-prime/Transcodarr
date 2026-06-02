@@ -20,7 +20,7 @@ public partial class MessageHandler
         IServiceScopeFactory serviceScopeFactory,
         ILogger<MessageHandler> logger,
         ConfigurationService configurationService,
-        ProbeManagerService probeManager        
+        ProbeManagerService probeManager
     )
     {
         _serviceScopeFactory = serviceScopeFactory;

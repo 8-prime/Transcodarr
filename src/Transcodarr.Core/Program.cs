@@ -30,6 +30,10 @@ builder.Services.AddTransient<WebSocketConnectionService>();
 
 builder.Services.AddHostedService<JobQueueManagerService>();
 
+builder.Services.Configure<LibraryWatcherSettings>(
+    builder.Configuration.GetSection("LibraryWatcher")
+);
+builder.Services.Configure<JobQueueSettings>(builder.Configuration.GetSection("JobQueue"));
 builder.Services.AddScoped<FileProbeService>();
 builder.Services.AddScoped<LibraryService>();
 builder.Services.AddSingleton<TranscodeEligibilityService>();

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Transcodarr.Core.Database;
 
 namespace Transcodarr.Core.Services.MediaFiles;
@@ -6,14 +7,17 @@ namespace Transcodarr.Core.Services.MediaFiles;
 public class LibraryWatcherService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IOptionsMonitor<LibraryWatcherSettings> _settings;
     private readonly ILogger<LibraryWatcherService> _logger;
 
     public LibraryWatcherService(
         IServiceScopeFactory scopeFactory,
+        IOptionsMonitor<LibraryWatcherSettings> settings,
         ILogger<LibraryWatcherService> logger
     )
     {
         _scopeFactory = scopeFactory;
+        _settings = settings;
         _logger = logger;
     }
 
@@ -47,7 +51,10 @@ public class LibraryWatcherService : BackgroundService
                 }
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(
+                TimeSpan.FromSeconds(_settings.CurrentValue.ScanIntervalSeconds),
+                stoppingToken
+            );
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Transcodarr.Core.Common.Constants;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
@@ -15,6 +16,7 @@ public class JobQueueManagerService : BackgroundService
     private readonly ConnectionManager _connections;
     private readonly WebSocketConnectionService _webSocketConnectionService;
     private readonly ConfigurationService _configurationService;
+    private readonly IOptionsMonitor<JobQueueSettings> _settings;
     private readonly ILogger<JobQueueManagerService> _logger;
 
     public JobQueueManagerService(
@@ -22,6 +24,7 @@ public class JobQueueManagerService : BackgroundService
         ConnectionManager connections,
         WebSocketConnectionService webSocketConnectionService,
         ConfigurationService configurationService,
+        IOptionsMonitor<JobQueueSettings> settings,
         ILogger<JobQueueManagerService> logger
     )
     {
@@ -29,6 +32,7 @@ public class JobQueueManagerService : BackgroundService
         _connections = connections;
         _webSocketConnectionService = webSocketConnectionService;
         _configurationService = configurationService;
+        _settings = settings;
         _logger = logger;
     }
 
@@ -36,7 +40,10 @@ public class JobQueueManagerService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(
+                TimeSpan.FromSeconds(_settings.CurrentValue.PollingIntervalSeconds),
+                stoppingToken
+            );
 
             await using var scope = _serviceScopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<TranscodarrDbContext>();
