@@ -54,6 +54,7 @@ using (var scope = app.Services.CreateScope())
     catch { }
 }
 
+app.UseStaticFiles();
 app.UseWebSockets();
 app.MapConnections();
 app.MapFilesystemEndpoints();
@@ -61,5 +62,6 @@ app.MapHistoryEndpoints();
 app.MapLibraryEndpoints();
 app.MapQueueEndpoints();
 app.MapSettingsEndpoints();
+app.MapFallbackToFile("index.html");
 
 app.Run();

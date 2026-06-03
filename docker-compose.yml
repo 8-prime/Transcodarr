@@ -1,0 +1,37 @@
+services:
+  core:
+    build:
+      context: .
+      dockerfile: Dockerfile.core
+    ports:
+      - "8080:8080"
+    volumes:
+      - core-db:/data
+      # Mount your media directories here so Core can scan them.
+      # Set library paths in the UI to match the container path (e.g. /media).
+      # - /path/to/your/media:/media
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__TranscodarrDb=Data Source=/data/transcodarr.db
+      # Optional overrides:
+      # - LibraryWatcher__ScanIntervalSeconds=30
+      # - JobQueue__PollingIntervalSeconds=30
+
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    depends_on:
+      - core
+    #volumes:
+      # Mount the same media directories as Core so Node can read/write files.
+      # - /path/to/your/media:/media
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - NodeConfiguration__CoreUrl=ws://core:8080
+      - NodeConfiguration__NodeId=TranscodarrNode
+      # Scale encoder concurrency (defaults come from appsettings.json):
+      # - NodeConfiguration__EncoderTypeCapacities__Software=2
+
+volumes:
+  core-db:
