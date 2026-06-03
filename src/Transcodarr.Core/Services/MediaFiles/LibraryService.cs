@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Common.Constants;
+using Transcodarr.Core.Common.Extensions;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
 using Transcodarr.Core.Database.Enums;
@@ -48,7 +49,7 @@ public class LibraryService
                 continue;
             }
 
-            if (fi.LastWriteTimeUtc == libraryScanInfo.FileModifiedAt)
+            if (fi.LastWriteTimeUtc.ToTruncatedUtcOffset() == libraryScanInfo.FileModifiedAt)
             {
                 continue;
             }
@@ -97,7 +98,7 @@ public class LibraryService
             Id = Guid.NewGuid(),
             Path = file,
             Status = TranscodeStatus.Discovered,
-            FileModifiedAt = fi.LastWriteTimeUtc,
+            FileModifiedAt = fi.LastWriteTimeUtc.ToTruncatedUtcOffset(),
             DiscoveredAt = DateTimeOffset.UtcNow,
             LibraryId = libraryId,
         };

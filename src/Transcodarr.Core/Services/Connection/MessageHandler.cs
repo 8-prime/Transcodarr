@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Transcodarr.Core.Common.Extensions;
 using Transcodarr.Core.Common.Models;
 using Transcodarr.Core.Database;
 using Transcodarr.Core.Database.Entities;
@@ -247,7 +248,7 @@ public partial class MessageHandler
             File.Move(job.OutputPath, job.MediaFile.Path, true);
             var fileInfo = new FileInfo(job.MediaFile.Path);
             job.Status = TranscodeJobStatus.Completed;
-            job.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc;
+            job.MediaFile.FileModifiedAt = fileInfo.LastWriteTimeUtc.ToTruncatedUtcOffset();
             job.MediaFile.Status = TranscodeStatus.Completed;
             context.TranscodeResults.Add(
                 new TranscodeResultEntity
