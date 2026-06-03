@@ -53,6 +53,7 @@ public static class FilesystemEndpoints
 
             var directories = dirInfo
                 .EnumerateDirectories()
+                .Where(e => !e.Name.StartsWith('.'))
                 .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(d => new FilesystemEntryResponse
                 {
