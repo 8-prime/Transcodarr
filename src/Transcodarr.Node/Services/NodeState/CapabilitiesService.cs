@@ -54,7 +54,7 @@ public class CapabilitiesService(
     public async Task<(
         List<EncoderCapability> Encoders,
         Dictionary<EncoderGroup, int> GroupCapacities
-    )> GetEncodersAsync(CancellationToken stoppingToken)
+        )> GetEncodersAsync(CancellationToken stoppingToken)
     {
         var encoders = new List<EncoderCapability>();
         foreach (var kvp in TranscodersMapping.EncodersByCodec)
@@ -117,7 +117,7 @@ public class CapabilitiesService(
             );
             return false;
         }
-        catch (FFMpegException ex)
+        catch (Exception ex)
         {
             logger.LogError(
                 ex,
