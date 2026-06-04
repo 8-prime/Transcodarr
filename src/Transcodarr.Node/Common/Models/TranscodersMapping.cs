@@ -7,9 +7,9 @@ public static class TranscodersMapping
 {
     public static readonly Dictionary<VideoCodec, HashSet<string>> EncodersByCodec = new()
     {
-        { VideoCodec.H264, ["libx264", "h264_nvenc", "h264_sqv", "h264_amf"] },
-        { VideoCodec.H265, ["libx265", "hevc_nvenc", "hevc_sqv", "hevc_amf"] },
-        { VideoCodec.Av1, ["libaom-av1", "av1_nvenc", "av1_sqv", "av1_amf"] },
+        { VideoCodec.H264, ["libx264", "h264_nvenc", "h264_qsv", "h264_amf"] },
+        { VideoCodec.H265, ["libx265", "hevc_nvenc", "hevc_qsv", "hevc_amf"] },
+        { VideoCodec.Av1, ["libaom-av1", "av1_nvenc", "av1_qsv", "av1_amf"] },
     };
 
     public static readonly Dictionary<string, EncoderGroup> EncoderSlotGroup = new()
@@ -23,9 +23,9 @@ public static class TranscodersMapping
         { "h264_amf", EncoderGroup.Amf },
         { "hevc_amf", EncoderGroup.Amf },
         { "av1_amf", EncoderGroup.Amf },
-        { "h264_sqv", EncoderGroup.Qsv },
-        { "hevc_sqv", EncoderGroup.Qsv },
-        { "av1_sqv", EncoderGroup.Qsv },
+        { "h264_qsv", EncoderGroup.Qsv },
+        { "hevc_qsv", EncoderGroup.Qsv },
+        { "av1_qsv", EncoderGroup.Qsv },
     };
 
     public static EncoderGroup GetSlotGroup(string encoder) =>
