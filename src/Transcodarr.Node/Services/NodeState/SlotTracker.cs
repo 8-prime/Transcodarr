@@ -13,10 +13,18 @@ public class SlotTracker
     )
     {
         foreach (var capability in capabilities)
+        {
             _encoderToGroup[capability.EncoderName] = capability.SlotGroup;
+        }
 
         foreach (var (group, capacity) in groupCapacities)
+        {
+            if (capacity <= 0)
+            {
+                continue;
+            }
             _groupSemaphores[group] = new SemaphoreSlim(capacity, capacity);
+        }
     }
 
     public bool TryAcquire(string encoderName)
