@@ -54,7 +54,7 @@ public class CapabilitiesService(
     public async Task<(
         List<EncoderCapability> Encoders,
         Dictionary<EncoderGroup, int> GroupCapacities
-        )> GetEncodersAsync(CancellationToken stoppingToken)
+    )> GetEncodersAsync(CancellationToken stoppingToken)
     {
         var encoders = new List<EncoderCapability>();
         foreach (var kvp in TranscodersMapping.EncodersByCodec)
@@ -85,7 +85,10 @@ public class CapabilitiesService(
         return (encoders, groupCapacities);
     }
 
-    private async Task<bool> IsEncoderAvailableAsync(string encoderName, CancellationToken stoppingToken)
+    private async Task<bool> IsEncoderAvailableAsync(
+        string encoderName,
+        CancellationToken stoppingToken
+    )
     {
         var nullSink = OperatingSystem.IsWindows() ? "NUL" : "/dev/null";
         try
@@ -106,9 +109,12 @@ public class CapabilitiesService(
                 .CancellableThrough(cts.Token)
                 .ProcessAsynchronously();
         }
-        catch (OperationCanceledException ex)
+        catch (OperationCanceledException)
         {
-            logger.LogWarning("Encoder {EncoderName} did not finish the test encode in time", encoderName);
+            logger.LogWarning(
+                "Encoder {EncoderName} did not finish the test encode in time",
+                encoderName
+            );
             return false;
         }
         catch (FFMpegException ex)
