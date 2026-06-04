@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { MonoText } from '@/components/common/MonoText'
 import { Badge } from '@/components/ui/badge'
+import { Pagination } from '@/components/ui/pagination'
 import {
   Table,
   TableBody,
@@ -10,9 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { CompletedJob } from '@/types/job'
+import type { PagedResponse } from '@/types/api'
 
 const GB = 1024 ** 3
 
@@ -30,11 +34,17 @@ function formatDuration(sec: number) {
 }
 
 export function HistoryPage() {
-  const { data: history = [] } = useQuery({
-    queryKey: ['history'],
-    queryFn: () => apiFetch<CompletedJob[]>('/history'),
+  const [page, setPage] = useState(1)
+
+  const { data } = useQuery({
+    queryKey: ['history', page],
+    queryFn: () => apiFetch<PagedResponse<CompletedJob>>(`/history?page=${page}&pageSize=25`),
     refetchInterval: 10000,
+    placeholderData: keepPreviousData,
   })
+
+  const history = data?.items ?? []
+  const totalPages = data?.totalPages ?? 1
 
   return (
     <div className="space-y-6">
@@ -63,7 +73,16 @@ export function HistoryPage() {
               return (
                 <TableRow key={job.id}>
                   <TableCell>
-                    <div className="truncate text-sm">{job.fileName}</div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="max-w-[280px] cursor-default truncate text-sm">
+                          {job.fileName}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs break-all">
+                        {job.fileName}
+                      </TooltipContent>
+                    </Tooltip>
                     <MonoText muted className="block">
                       {job.libraryName}
                     </MonoText>
@@ -98,6 +117,8 @@ export function HistoryPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }

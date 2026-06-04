@@ -12,8 +12,10 @@ import { PageHeader } from '@/components/common/PageHeader'
 import { StatCard } from '@/components/common/StatCard'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { MonoText } from '@/components/common/MonoText'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { apiFetch } from '@/lib/api'
 import type { QueueItem, CompletedJob } from '@/types/job'
+import type { PagedResponse } from '@/types/api'
 
 export function DashboardPage() {
   const { data: connections, isError } = useConnections()
@@ -21,17 +23,21 @@ export function DashboardPage() {
   const totalFreeSlots =
     connections?.reduce((sum, c) => sum + c.freeSlots, 0) ?? 0
 
-  const { data: queue = [] } = useQuery({
-    queryKey: ['queue'],
-    queryFn: () => apiFetch<QueueItem[]>('/queue'),
+  const { data: queueData } = useQuery({
+    queryKey: ['queue', 'dashboard'],
+    queryFn: () => apiFetch<PagedResponse<QueueItem>>('/queue?page=1&pageSize=200'),
     refetchInterval: 3000,
   })
 
-  const { data: history = [] } = useQuery({
-    queryKey: ['history'],
-    queryFn: () => apiFetch<CompletedJob[]>('/history'),
+  const { data: historyData } = useQuery({
+    queryKey: ['history', 'recent'],
+    queryFn: () => apiFetch<PagedResponse<CompletedJob>>('/history?page=1&pageSize=5'),
     refetchInterval: 10000,
   })
+
+  const queue = queueData?.items ?? []
+  const recentHistory = historyData?.items ?? []
+  const totalCompleted = historyData?.totalItems ?? 0
 
   const processing = queue.filter((j) => j.state === 'Processing')
   const pending = queue.filter((j) => j.state === 'Pending' || j.state === 'Discovered')
@@ -72,7 +78,7 @@ export function DashboardPage() {
         />
         <StatCard
           label="Completed"
-          value={history.length}
+          value={totalCompleted}
           hint="all time"
           icon={CheckCircle2}
           tone="ok"
@@ -96,15 +102,22 @@ export function DashboardPage() {
             </Link>
           </header>
           <ul className="divide-y divide-border/60">
-            {history.slice(0, 5).map((job) => (
+            {recentHistory.map((job) => (
               <li
                 key={job.id}
                 className="flex items-center justify-between gap-4 px-5 py-3"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-sm text-foreground">
-                    {job.fileName}
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-default truncate text-sm text-foreground">
+                        {job.fileName}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs break-all">
+                      {job.fileName}
+                    </TooltipContent>
+                  </Tooltip>
                   <MonoText muted className="block">
                     {job.libraryName} · {job.encoderUsed} · CRF {job.crf}
                   </MonoText>

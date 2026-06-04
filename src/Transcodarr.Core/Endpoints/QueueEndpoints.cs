@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Transcodarr.Core.Common.DTOs;
@@ -19,18 +19,35 @@ public static class QueueEndpoints
         return endpoints;
     }
 
-    private static async Task<Ok<IEnumerable<QueueItemResponse>>> GetQueueItems(
+    private static async Task<Ok<PagedResponse<QueueItemResponse>>> GetQueueItems(
         [FromServices] TranscodarrDbContext dbContext,
-        CancellationToken stoppingToken
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken stoppingToken = default
     )
     {
-        var items = await dbContext
-            .MediaFiles.Where(m =>
-                m.Status == TranscodeStatus.Discovered
-                || m.Status == TranscodeStatus.Pending
-                || m.Status == TranscodeStatus.InProgress
-                || m.Status == TranscodeStatus.Failed
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 200);
+
+        var baseQuery = dbContext.MediaFiles.Where(m =>
+            m.Status == TranscodeStatus.Discovered
+            || m.Status == TranscodeStatus.Pending
+            || m.Status == TranscodeStatus.InProgress
+            || m.Status == TranscodeStatus.Failed
+        );
+
+        var total = await baseQuery.CountAsync(stoppingToken);
+
+        var items = await baseQuery
+            .OrderBy(m =>
+                m.Status == TranscodeStatus.InProgress ? 0
+                : m.Status == TranscodeStatus.Pending ? 1
+                : m.Status == TranscodeStatus.Discovered ? 2
+                : 3
             )
+            .ThenByDescending(m => m.DiscoveredAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(m => new QueueItemResponse
             {
                 Id = m.Id,
@@ -58,6 +75,10 @@ public static class QueueEndpoints
             })
             .ToArrayAsync(stoppingToken);
 
-        return TypedResults.Ok<IEnumerable<QueueItemResponse>>(items);
+        var totalPages = (int)Math.Ceiling((double)total / pageSize);
+
+        return TypedResults.Ok(
+            new PagedResponse<QueueItemResponse>(items, page, pageSize, total, totalPages)
+        );
     }
 }

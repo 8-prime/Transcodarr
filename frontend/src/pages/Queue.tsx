@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { PageHeader } from '@/components/common/PageHeader'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { MonoText } from '@/components/common/MonoText'
 import { Badge } from '@/components/ui/badge'
+import { Pagination } from '@/components/ui/pagination'
 import { Progress } from '@/components/ui/progress'
 import {
   Table,
@@ -13,31 +14,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { apiFetch } from '@/lib/api'
 import type { QueueItem, QueueItemState } from '@/types/job'
-
-const STATE_ORDER: QueueItemState[] = [
-  'Processing',
-  'Pending',
-  'Discovered',
-  'Failed',
-  'LeaseExpired',
-]
+import type { PagedResponse } from '@/types/api'
 
 export function QueuePage() {
-  const { data: items = [] } = useQuery({
-    queryKey: ['queue'],
-    queryFn: () => apiFetch<QueueItem[]>('/queue'),
+  const [page, setPage] = useState(1)
+
+  const { data } = useQuery({
+    queryKey: ['queue', page],
+    queryFn: () => apiFetch<PagedResponse<QueueItem>>(`/queue?page=${page}&pageSize=25`),
     refetchInterval: 3000,
+    placeholderData: keepPreviousData,
   })
 
-  const sorted = useMemo(
-    () =>
-      [...items].sort(
-        (a, b) => STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state),
-      ),
-    [items],
-  )
+  const items = data?.items ?? []
+  const totalPages = data?.totalPages ?? 1
+
+  useEffect(() => {
+    if (data?.totalPages !== undefined && page > data.totalPages && data.totalPages > 0) {
+      setPage(data.totalPages)
+    }
+  }, [data?.totalPages, page])
 
   return (
     <div className="space-y-6">
@@ -45,7 +44,8 @@ export function QueuePage() {
         title="Queue"
         description="All media files awaiting or actively undergoing transcoding."
       />
-      <QueueTable items={sorted} />
+      <QueueTable items={items} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }
@@ -76,7 +76,16 @@ function QueueTable({ items }: { items: QueueItem[] }) {
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell>
-                <div className="truncate text-sm">{item.fileName}</div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="max-w-[260px] cursor-default truncate text-sm">
+                      {item.fileName}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs break-all">
+                    {item.fileName}
+                  </TooltipContent>
+                </Tooltip>
                 {item.attemptNumber > 0 && (
                   <MonoText muted className="block truncate">
                     attempt #{item.attemptNumber}
