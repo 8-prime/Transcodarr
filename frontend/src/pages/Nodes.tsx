@@ -64,12 +64,12 @@ export function NodesPage() {
           description="Start a Transcodarr.Node process and it will appear here automatically once the WebSocket handshake completes."
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
-          <Table>
+        <div className="overflow-x-auto rounded-lg border border-border bg-card">
+          <Table className="min-w-[480px]">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[280px]">Node</TableHead>
-                <TableHead>Encoders</TableHead>
+                <TableHead className="hidden sm:table-cell">Encoders</TableHead>
                 <TableHead className="w-[140px] text-right">Free slots</TableHead>
                 <TableHead className="w-[140px]">Status</TableHead>
               </TableRow>
@@ -99,7 +99,7 @@ export function NodesPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {node.nodeInfo?.encoderCapabilities.length ? (
                         <div className="flex flex-wrap gap-1.5">
                           {node.nodeInfo.encoderCapabilities.map((e) => (

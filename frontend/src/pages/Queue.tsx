@@ -60,15 +60,15 @@ function QueueTable({ items }: { items: QueueItem[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <Table>
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <Table className="min-w-[560px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead>File</TableHead>
-            <TableHead className="w-[140px]">Library</TableHead>
+            <TableHead className="hidden w-[140px] sm:table-cell">Library</TableHead>
             <TableHead className="w-[120px]">State</TableHead>
             <TableHead className="w-[160px]">Codec</TableHead>
-            <TableHead className="w-[140px]">Node</TableHead>
+            <TableHead className="hidden w-[140px] sm:table-cell">Node</TableHead>
             <TableHead className="w-[180px]">Progress</TableHead>
           </TableRow>
         </TableHeader>
@@ -92,7 +92,7 @@ function QueueTable({ items }: { items: QueueItem[] }) {
                   </MonoText>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden sm:table-cell">
                 <span className="text-sm text-muted-foreground">{item.libraryName}</span>
               </TableCell>
               <TableCell>
@@ -111,7 +111,7 @@ function QueueTable({ items }: { items: QueueItem[] }) {
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden sm:table-cell">
                 {item.nodeId ? (
                   <MonoText className="text-foreground">{item.nodeId}</MonoText>
                 ) : (

@@ -27,7 +27,11 @@ const NAV: NavItem[] = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void
+}
+
+export function Sidebar({ onNavigate }: SidebarProps) {
   const { data: connections, isError, isLoading } = useConnections()
   const readyCount = connections?.filter((c) => c.connectionIsReady).length ?? 0
   const total = connections?.length ?? 0
@@ -55,6 +59,7 @@ export function Sidebar() {
             key={to}
             to={to}
             end={end}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 'group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors',

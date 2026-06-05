@@ -53,16 +53,16 @@ export function HistoryPage() {
         description="Completed transcode jobs with quality and size deltas."
       />
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        <Table>
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+        <Table className="min-w-[560px]">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>File</TableHead>
               <TableHead className="w-[160px]">Encoder</TableHead>
-              <TableHead className="w-[90px] text-right">CRF</TableHead>
+              <TableHead className="hidden w-[90px] text-right sm:table-cell">CRF</TableHead>
               <TableHead className="w-[90px] text-right">VMAF</TableHead>
               <TableHead className="w-[120px] text-right">Size Δ</TableHead>
-              <TableHead className="w-[110px] text-right">Duration</TableHead>
+              <TableHead className="hidden w-[110px] text-right sm:table-cell">Duration</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -92,7 +92,7 @@ export function HistoryPage() {
                       {job.encoderUsed}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right font-mono text-sm">
+                  <TableCell className="hidden text-right font-mono text-sm sm:table-cell">
                     {job.crf}
                   </TableCell>
                   <TableCell className="text-right">
@@ -108,7 +108,7 @@ export function HistoryPage() {
                       {inputGB.toFixed(1)} → {outputGB.toFixed(1)} GB
                     </MonoText>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="hidden text-right sm:table-cell">
                     <MonoText>{formatDuration(job.durationSec)}</MonoText>
                   </TableCell>
                 </TableRow>
