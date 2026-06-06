@@ -1,7 +1,9 @@
-﻿using System.Diagnostics;
-using FFMpegCore;
+﻿using FFMpegCore;
+using FFMpegCore.Enums;
 using Transcodarr.Node.Common.Mapping;
+using Transcodarr.Node.Common.Models;
 using Transcodarr.Node.Services.Connection;
+using Transcodarr.Shared;
 using Transcodarr.Shared.DTOs;
 
 namespace Transcodarr.Node.Services.Transcoding;
@@ -39,32 +41,16 @@ public class TranscodeService
             duration
         );
 
-        var args = FFMpegArguments
-            .FromFileInput(filePath)
-            .OutputToFile(
-                outputPath,
-                false,
-                options =>
-                    options
-                        .WithVideoCodec(encoderName)
-                        .WithConstantRateFactor(transcodeQualitySettings.ConstantRateFactor)
-                        .WithAudioCodec(transcodeQualitySettings.DesiredAudioCodec.Map())
-                        .OverwriteExisting()
-            )
-            .NotifyOnProgress(
-                p =>
-                {
-                    _logger.LogDebug("Job {JobId}: progress {Percent:F1}%", jobLeaseId, p);
-                    _messagesQueue.Enqueue(
-                        new TranscodeProgress(p, jobLeaseId) { CorrelationId = Guid.NewGuid() }
-                    );
-                },
-                duration
-            )
-            .NotifyOnError(e =>
-                _logger.LogWarning("Job {JobId} ffmpeg stderr: {Line}", jobLeaseId, e)
-            )
-            .CancellableThrough(stoppingToken);
+        var encoderGroup = TranscodersMapping.GetSlotGroup(encoderName);
+
+        var args = CreateTranscodeArgs(
+            filePath,
+            outputPath,
+            transcodeQualitySettings,
+            encoderName,
+            encoderGroup
+        );
+        SetupNotifications(jobLeaseId, duration, args).CancellableThrough(stoppingToken);
 
         _logger.LogDebug("Running FFMpeg with args {Args}", args.Arguments);
         var success = await args.ProcessAsynchronously(throwOnError: false);
@@ -88,5 +74,99 @@ public class TranscodeService
         {
             CorrelationId = Guid.NewGuid(),
         };
+    }
+
+    private FFMpegArgumentProcessor SetupNotifications(
+        Guid jobLeaseId,
+        TimeSpan duration,
+        FFMpegArgumentProcessor args
+    )
+    {
+        return args.NotifyOnProgress(
+                p =>
+                {
+                    _logger.LogDebug("Job {JobId}: progress {Percent:F1}%", jobLeaseId, p);
+                    _messagesQueue.Enqueue(
+                        new TranscodeProgress(p, jobLeaseId) { CorrelationId = Guid.NewGuid() }
+                    );
+                },
+                duration
+            )
+            .NotifyOnError(e =>
+                _logger.LogWarning("Job {JobId} ffmpeg stderr: {Line}", jobLeaseId, e)
+            );
+    }
+
+    private FFMpegArgumentProcessor CreateTranscodeArgs(
+        string filePath,
+        string outputPath,
+        TranscodeQualitySettings transcodeQualitySettings,
+        string encoderName,
+        EncoderGroup encoderGroup
+    )
+    {
+        return FFMpegArguments
+            .FromFileInput(
+                filePath,
+                true,
+                inputOptions =>
+                {
+                    switch (encoderGroup)
+                    {
+                        case EncoderGroup.Nvenc:
+                            inputOptions
+                                .WithHardwareAcceleration(HardwareAccelerationDevice.CUVID)
+                                .WithCustomArgument("-hwaccel_output_format cuda");
+                            break;
+                        case EncoderGroup.Qsv:
+                            inputOptions
+                                .WithHardwareAcceleration(HardwareAccelerationDevice.QSV)
+                                .WithCustomArgument("-hwaccel_output_format qsv");
+                            break;
+                        case EncoderGroup.Amf:
+                            inputOptions.WithHardwareAcceleration();
+                            break;
+                        case EncoderGroup.Software:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+            )
+            .OutputToFile(
+                outputPath,
+                false,
+                options =>
+                {
+                    options
+                        .WithVideoCodec(encoderName)
+                        .WithSpeedPreset(transcodeQualitySettings.DesiredEncoderPreset.Map())
+                        .WithAudioCodec(transcodeQualitySettings.DesiredAudioCodec.Map())
+                        .OverwriteExisting();
+
+                    switch (encoderGroup)
+                    {
+                        case EncoderGroup.Nvenc:
+                            options.WithCustomArgument(
+                                $"-cq {transcodeQualitySettings.ConstantRateFactor}"
+                            );
+                            break;
+                        case EncoderGroup.Qsv:
+                            options
+                                .WithCustomArgument(
+                                    $"-global_quality {transcodeQualitySettings.ConstantRateFactor}"
+                                )
+                                .WithCustomArgument("-look_ahead 1");
+                            break;
+                        case EncoderGroup.Software:
+                        case EncoderGroup.Amf:
+                        default:
+                            options.WithConstantRateFactor(
+                                transcodeQualitySettings.ConstantRateFactor
+                            );
+                            break;
+                    }
+                }
+            );
     }
 }
