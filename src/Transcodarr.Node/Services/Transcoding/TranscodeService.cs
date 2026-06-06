@@ -138,32 +138,31 @@ public class TranscodeService
                 false,
                 options =>
                 {
+                    var preset = transcodeQualitySettings.DesiredEncoderPreset;
+                    var crf = transcodeQualitySettings.ConstantRateFactor;
+
                     options
                         .WithVideoCodec(encoderName)
-                        .WithSpeedPreset(transcodeQualitySettings.DesiredEncoderPreset.Map())
                         .WithAudioCodec(transcodeQualitySettings.DesiredAudioCodec.Map())
                         .OverwriteExisting();
 
                     switch (encoderGroup)
                     {
                         case EncoderGroup.Nvenc:
-                            options.WithCustomArgument(
-                                $"-cq {transcodeQualitySettings.ConstantRateFactor}"
-                            );
+                            options
+                                .WithCustomArgument($"-preset {preset.MapToNvenc()}")
+                                .WithCustomArgument($"-cq {crf}");
                             break;
                         case EncoderGroup.Qsv:
                             options
-                                .WithCustomArgument(
-                                    $"-global_quality {transcodeQualitySettings.ConstantRateFactor}"
-                                )
+                                .WithCustomArgument($"-preset {preset.MapToQsv()}")
+                                .WithCustomArgument($"-global_quality {crf}")
                                 .WithCustomArgument("-look_ahead 1");
                             break;
                         case EncoderGroup.Software:
                         case EncoderGroup.Amf:
                         default:
-                            options.WithConstantRateFactor(
-                                transcodeQualitySettings.ConstantRateFactor
-                            );
+                            options.WithSpeedPreset(preset.Map()).WithConstantRateFactor(crf);
                             break;
                     }
                 }
