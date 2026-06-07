@@ -17,6 +17,7 @@ public static class QueueItemMapping
                 TranscodeStatus.NotRequired => QueueItemStatus.Completed,
                 TranscodeStatus.Completed => QueueItemStatus.Completed,
                 TranscodeStatus.Failed => QueueItemStatus.Failed,
+                TranscodeStatus.Completing => QueueItemStatus.Processing,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(transcodeStatus),
                     transcodeStatus,

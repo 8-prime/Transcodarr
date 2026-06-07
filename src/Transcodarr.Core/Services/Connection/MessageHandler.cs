@@ -245,6 +245,9 @@ public partial class MessageHandler
                 return;
             }
 
+            job.MediaFile.Status = TranscodeStatus.Completing;
+            await context.SaveChangesAsync(cancellationToken);
+
             File.Move(job.OutputPath, job.MediaFile.Path, true);
             var fileInfo = new FileInfo(job.MediaFile.Path);
             job.Status = TranscodeJobStatus.Completed;

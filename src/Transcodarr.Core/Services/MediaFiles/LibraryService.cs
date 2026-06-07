@@ -49,6 +49,11 @@ public class LibraryService
                 continue;
             }
 
+            if (libraryScanInfo.Status == TranscodeStatus.Completing)
+            {
+                continue;
+            }
+
             if (fi.LastWriteTimeUtc.ToTruncatedUtcOffset() == libraryScanInfo.FileModifiedAt)
             {
                 continue;
@@ -59,6 +64,11 @@ public class LibraryService
                 stoppingToken
             );
             if (mediaFile is null)
+            {
+                continue;
+            }
+
+            if (mediaFile.Status == TranscodeStatus.Completing)
             {
                 continue;
             }

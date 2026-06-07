@@ -8,4 +8,5 @@ public enum TranscodeStatus
     NotRequired, // probed, already in target format
     Completed, // transcoded successfully
     Failed, // failed, needs manual attention
+    Completing, // file move in progress
 }
